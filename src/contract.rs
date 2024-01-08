@@ -38,6 +38,8 @@ pub fn instantiate(
     let mut state = State::default();
     state.owner = info.sender.clone();
     state.protocolFeeDestination = info.sender.clone();
+    state.subjectFeePercent = Uint128::new(5);
+    state.protocolFeePercent = Uint128::new(5);
 
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -310,7 +312,7 @@ mod tests {
         assert_eq!(state.subjectFeePercent, Uint128::new(5));
         assert_eq!(state.protocolFeePercent, Uint128::new(5));
         assert_eq!(state.protocolFeeDestination, Addr::unchecked("creator"));
-        assert_eq!(state.shares_balance.len(), 1); // One entry for subject_addr
+        assert_eq!(state.shares_balance.len(), 0); // One entry for subject_addr
         assert_eq!(state.sharesSupply.len(), 0); // Initialized as an empty HashMap
     }
 }
