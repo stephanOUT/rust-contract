@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, Uint128, Event, StdError, Coin};
+use cosmwasm_std::{Addr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -24,6 +24,7 @@ pub enum QueryMsg {
     GetSellPrice { shares_subject: Addr, amount: Uint128 },
     GetBuyPriceAfterFee { shares_subject: Addr, amount: Uint128 },
     GetSellPriceAfterFee { shares_subject: Addr, amount: Uint128 },
+    GetShareBalance { shares_subject: Addr, my_address: Addr },
     GetState { },
 
 }
