@@ -5,7 +5,7 @@ use cosmwasm_std::{BankMsg, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, 
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, GetBuyPriceResponse, GetSellPriceResponse, GetPriceResponse, GetBuyPriceAfterFeeResponse, GetSellPriceAfterFeeResponse};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, GetBuyPriceResponse, GetSellPriceResponse, GetPriceResponse, GetBuyPriceAfterFeeResponse, GetSellPriceAfterFeeResponse, GetShareBalance};
 use crate::state::{State, STATE};
 
 // version info for migration info
@@ -220,6 +220,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetSellPrice { shares_subject, amount } => to_binary(&get_sell_price(deps, shares_subject, amount)?),
         QueryMsg::GetBuyPriceAfterFee { shares_subject, amount } => to_binary(&get_buy_price_after_fee(deps, shares_subject, amount)?),
         QueryMsg::GetSellPriceAfterFee { shares_subject, amount } => to_binary(&get_sell_price_after_fee(deps, shares_subject, amount)?),
+        QueryMsg::GetShareBalance { shares_subject, my_address } => to_binary(&get_share_balance(deps, shares_subject, my_address)?),
         QueryMsg::GetState {} => {
             let state = STATE.load(deps.storage)?;
             to_binary(&state)
@@ -280,10 +281,25 @@ pub fn get_sell_price_after_fee(deps: Deps, shares_subject: Addr, amount: Uint12
     Ok(GetSellPriceAfterFeeResponse { price: returnprice})
 }
 
+pub fn get_share_balance(deps: Deps, shares_subject: Addr, my_address: Addr) -> StdResult<GetShareBalance> {
+    let state = STATE.load(deps.storage)?;
+    Ok(GetShareBalance {
+        amount: state
+        .shares_balance
+        .get(&shares_subject)
+        .map(|balance_map| {
+            balance_map
+                .values()
+                .fold(Uint128::zero(), |acc, &balance| acc + balance)
+        })
+        .unwrap_or_default(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary};
 
     #[test]
@@ -312,7 +328,7 @@ mod tests {
         assert_eq!(state.subjectFeePercent, Uint128::new(5));
         assert_eq!(state.protocolFeePercent, Uint128::new(5));
         assert_eq!(state.protocolFeeDestination, Addr::unchecked("creator"));
-        assert_eq!(state.shares_balance.len(), 0); // One entry for subject_addr
+        assert_eq!(state.shares_balance.len(), 0);
         assert_eq!(state.sharesSupply.len(), 0); // Initialized as an empty HashMap
     }
 }
