@@ -7,11 +7,12 @@ use crate::{
         GetSellPriceAfterFeeResponse, GetSellPriceResponse, GetShareBalanceResponse,
         InstantiateMsg, QueryMsg,
     },
-    state::{State, STATE},
+    state::{State, SHARES_BALANCE, SHARES_SUPPLY, STATE},
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, from_slice,
+    entry_point, from_slice, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError,
+    StdResult, Uint128,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -32,14 +33,14 @@ pub fn instantiate(
         owner: info.sender.clone(),
         subject_fee_percent: Uint128::new(5),
         protocol_fee_percent: Uint128::new(5),
-        shares_supply: HashMap::<Addr, Uint128>::new(),
-        shares_balance: HashMap::<Addr, HashMap<Addr, Uint128>>::new(),
+        // shares_supply: HashMap::<Addr, Uint128>::new(),
+        /// shares_balance: HashMap::<Addr, HashMap<Addr, Uint128>>::new(),
         protocol_fee_destination: info.sender.clone(), // change later
     };
 
     // Convert HashMaps to a JSON string
-    let shares_supply_json = serde_json::to_string(&state.shares_supply).unwrap();
-    let shares_balance_json = serde_json::to_string(&state.shares_balance).unwrap();
+    //let shares_supply_json = serde_json::to_string(&state.shares_supply).unwrap();
+    // let shares_balance_json = serde_json::to_string(&state.shares_balance).unwrap();
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -48,9 +49,9 @@ pub fn instantiate(
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
         .add_attribute("subject_fee_percent", Uint128::new(5))
-        .add_attribute("protocol_fee_percent", Uint128::new(5))
-        .add_attribute("shares_supply", shares_supply_json)
-        .add_attribute("shares_balance", shares_balance_json))
+        .add_attribute("protocol_fee_percent", Uint128::new(5)))
+    //.add_attribute("shares_supply", shares_supply_json)
+    // .add_attribute("shares_balance", shares_balance_json))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -133,11 +134,14 @@ pub fn buy_shares(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    let supply = state
-        .shares_supply
-        .get(&shares_subject)
-        .cloned()
-        .unwrap_or_else(|| Uint128::zero());
+    let supply = SHARES_SUPPLY
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+    // let supply = state
+    //     .shares_supply
+    //     .get(&shares_subject)
+    //     .cloned()
+    //     .unwrap_or_else(|| Uint128::zero());
     if supply > Uint128::zero() || shares_subject == info.sender {
         let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
         println!("Serialized state: {:?}", state_bytes);
@@ -154,23 +158,28 @@ pub fn buy_shares(
         );
         let state3 = STATE.load(deps.storage)?;
         println!("Test3 profee {:?}", state3.protocol_fee_percent);
-        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            println!("Before update: {:?}", state);
-            let subject_map = state
-                .shares_balance
-                .entry(shares_subject.clone())
-                .or_insert_with(|| HashMap::new());
-            *subject_map
-                .entry(info.sender.clone())
-                .or_insert(Uint128::zero()) += amount;
-            let supply = state
-                .shares_supply
-                .entry(shares_subject.clone())
-                .or_insert(Uint128::zero());
-            *supply += amount;
-            println!("After update: {:?}", state);
-            Ok(state)
-        })?;
+        SHARES_BALANCE.update(
+            deps.storage,
+            (&info.sender, &shares_subject),
+            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
+        )?;
+        // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+        //     println!("Before update: {:?}", state);
+        //     let subject_map = state
+        //         .shares_balance
+        //         .entry(shares_subject.clone())
+        //         .or_insert_with(|| HashMap::new());
+        //     *subject_map
+        //         .entry(info.sender.clone())
+        //         .or_insert(Uint128::zero()) += amount;
+        //     let supply = state
+        //         .shares_supply
+        //         .entry(shares_subject.clone())
+        //         .or_insert(Uint128::zero());
+        //     *supply += amount;
+        //     println!("After update: {:?}", state);
+        //     Ok(state)
+        // })?;
 
         let the_protocol_fee = vec![Coin {
             denom: info.funds[0].denom.clone(),
@@ -204,24 +213,28 @@ pub fn buy_shares(
 
         let state2_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
         println!("Updated Serialized state: {:?}", state2_bytes);
-        let hex_string: String = state2_bytes.iter().map(|byte| format!("{:02X}", byte)).collect();
+        let hex_string: String = state2_bytes
+            .iter()
+            .map(|byte| format!("{:02X}", byte))
+            .collect();
         println!("Hexadecimal representation: {}", hex_string);
 
-	// Convert bytes to String
-	let state_str = String::from_utf8_lossy(&state2_bytes).to_string();
+        // Convert bytes to String
+        let state_str = String::from_utf8_lossy(&state2_bytes).to_string();
 
-	// Deserialize the JSON string
-	let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
+        // Deserialize the JSON string
+        let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
 
-	let state = match deserialized_state {
-	    Ok(s) => s,
-	    Err(err) => {
-		let std_err: StdError = StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
-		return Err(ContractError::Std(std_err));
-	    }
-	};
+        let state = match deserialized_state {
+            Ok(s) => s,
+            Err(err) => {
+                let std_err: StdError =
+                    StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
+                return Err(ContractError::Std(std_err));
+            }
+        };
 
-	println!("Deserialized state: {:?}", state);
+        println!("Deserialized state: {:?}", state);
 
         Ok(Response::default())
     } else {
@@ -263,11 +276,14 @@ pub fn sell_shares(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    let supply = state
-        .shares_supply
-        .get(&shares_subject)
-        .cloned()
-        .unwrap_or_else(|| Uint128::zero());
+    // let supply = state
+    //     .shares_supply
+    //     .get(&shares_subject)
+    //     .cloned()
+    //     .unwrap_or_else(|| Uint128::zero());
+    let supply = SHARES_SUPPLY
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
     if supply > amount {
         let price_response: GetPriceResponse = get_price(supply, amount)?;
         let price: Uint128 = price_response.price;
@@ -275,27 +291,50 @@ pub fn sell_shares(
             price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
         let subject_fee =
             price * state.subject_fee_percent / Uint128::new(1_000_000_000_000_000_000);
-        let balance = state
-            .shares_balance
-            .get(&shares_subject)
-            .and_then(|balances| balances.get(&info.sender).copied())
-            .unwrap_or(Uint128::zero());
+        let balance = SHARES_BALANCE
+            .may_load(deps.storage, (&info.sender, &shares_subject))?
+            .unwrap_or_default();
+        // let balance = state
+        //     .shares_balance
+        //     .get(&shares_subject)
+        //     .and_then(|balances| balances.get(&info.sender).copied())
+        //     .unwrap_or(Uint128::zero());
         if balance >= amount {
-            STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-                let subject_map = state
-                    .shares_balance
-                    .entry(shares_subject.clone())
-                    .or_insert_with(|| HashMap::new());
-                *subject_map
-                    .entry(info.sender.clone())
-                    .or_insert(Uint128::zero()) -= amount;
-                let supply = state
-                    .shares_supply
-                    .entry(shares_subject.clone())
-                    .or_insert(Uint128::zero());
-                *supply -= amount;
-                Ok(state)
-            })?;
+            let supply = SHARES_SUPPLY
+                .may_load(deps.storage, &shares_subject)?
+                .unwrap_or_default();
+
+            SHARES_BALANCE.update(
+                deps.storage,
+                (&info.sender, &shares_subject),
+                |balance: Option<Uint128>| -> StdResult<_> {
+                    Ok(balance.unwrap_or_default() - amount)
+                },
+            )?;
+
+            SHARES_SUPPLY.update(
+                deps.storage,
+                &shares_subject,
+                |supply: Option<Uint128>| -> StdResult<_> {
+                    Ok(supply.unwrap_or_default() + amount)
+                },
+            )?;
+
+            // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            //     let subject_map = state
+            //         .shares_balance
+            //         .entry(shares_subject.clone())
+            //         .or_insert_with(|| HashMap::new());
+            //     *subject_map
+            //         .entry(info.sender.clone())
+            //         .or_insert(Uint128::zero()) -= amount;
+            //     let supply = state
+            //         .shares_supply
+            //         .entry(shares_subject.clone())
+            //         .or_insert(Uint128::zero());
+            //     *supply -= amount;
+            //     Ok(state)
+            // })?;
 
             let total_withdrawal = price - protocol_fee - subject_fee;
             let funds = vec![Coin {
@@ -384,11 +423,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::GetState {} => {
             println!("Query: GetState");
-            //let state: State = STATE.load(deps.storage)?;
-            let state = get_deserialized_state(&deps)?;
+            let state: State = STATE.load(deps.storage)?;
+            // let state = get_deserialized_state(&deps)?;
             println!("Query Result: {:?}", state);
             to_json_binary::<State>(&state)
-        }
+        },
     }
 }
 
@@ -398,14 +437,10 @@ pub fn get_buy_price(
     amount: Uint128,
 ) -> StdResult<GetBuyPriceResponse> {
     let state = STATE.load(deps.storage)?;
-    let buy_price_response = get_price(
-        state
-            .shares_supply
-            .get(&shares_subject)
-            .copied()
-            .unwrap_or_else(|| Uint128::zero()),
-        amount,
-    )?;
+    let supply = SHARES_SUPPLY
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+    let buy_price_response = get_price(supply, amount)?;
     let buy_price: Uint128 = buy_price_response.price;
     Ok(GetBuyPriceResponse { price: buy_price })
 }
@@ -416,15 +451,10 @@ pub fn get_sell_price(
     amount: Uint128,
 ) -> StdResult<GetSellPriceResponse> {
     let state = STATE.load(deps.storage)?;
-    let sell_price_response: GetPriceResponse = get_price(
-        state
-            .shares_supply
-            .get(&shares_subject)
-            .copied()
-            .unwrap_or_else(|| Uint128::zero())
-            - amount,
-        amount,
-    )?;
+    let supply = SHARES_SUPPLY
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+    let sell_price_response: GetPriceResponse = get_price(supply - amount, amount)?;
     let sell_price: Uint128 = sell_price_response.price;
     Ok(GetSellPriceResponse { price: sell_price })
 }
@@ -466,37 +496,30 @@ pub fn get_share_balance(
     shares_subject: Addr,
     my_address: Addr,
 ) -> StdResult<GetShareBalanceResponse> {
-    let state = STATE.load(deps.storage)?;
-    Ok(GetShareBalanceResponse {
-        amount: state
-            .shares_balance
-            .get(&shares_subject)
-            .map(|balance_map| {
-                balance_map
-                    .values()
-                    .fold(Uint128::zero(), |acc, &balance| acc + balance)
-            })
-            .unwrap_or_default(),
-    })
+    let balance = SHARES_BALANCE
+        .may_load(deps.storage, (&my_address, &shares_subject))?
+        .unwrap_or_default();
+    Ok(GetShareBalanceResponse { amount: balance })
 }
 
-pub fn get_deserialized_state(deps: &Deps) -> Result<State, ContractError> {
-    // Load bytes from storage
-    let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
+// pub fn get_deserialized_state(deps: &Deps) -> Result<State, ContractError> {
+//     // Load bytes from storage
+//     let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
 
-    // Convert bytes to String
-    let state_str = String::from_utf8_lossy(&state_bytes).to_string();
+//     // Convert bytes to String
+//     let state_str = String::from_utf8_lossy(&state_bytes).to_string();
 
-    // Deserialize the JSON string
-    let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
+//     // Deserialize the JSON string
+//     let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
 
-    let state = match deserialized_state {
-        Ok(s) => s,
-        Err(err) => {
-            let std_err: StdError = StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
-            return Err(ContractError::Std(std_err));
-        }
-    };
+//     let state = match deserialized_state {
+//         Ok(s) => s,
+//         Err(err) => {
+//             let std_err: StdError =
+//                 StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
+//             return StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
+//         }
+//     };
 
-    Ok(state)
-}
+//     Ok(state)
+// }
