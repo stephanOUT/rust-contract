@@ -127,7 +127,16 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query  the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap(); // error is here
+        //let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap(); // error is here
+        println!("1");
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {});
+        println!("2");
+        if let Err(err) = res {
+            panic!("Query failed: {:?}", err);
+        }
+        println!("3");
+        let res = res.unwrap();
+        println!("4");
         let state: State = from_json(&res).unwrap(); 
         assert_eq!(
             shares_to_buy,

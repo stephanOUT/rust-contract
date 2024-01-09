@@ -11,7 +11,7 @@ use crate::{
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128,
+    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, from_slice,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -139,6 +139,9 @@ pub fn buy_shares(
         .cloned()
         .unwrap_or_else(|| Uint128::zero());
     if supply > Uint128::zero() || shares_subject == info.sender {
+        let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
+        println!("Serialized state: {:?}", state_bytes);
+
         let price_response: GetPriceResponse = get_price(supply, amount)?;
         let price: Uint128 = price_response.price;
         let protocol_fee =
@@ -149,6 +152,8 @@ pub fn buy_shares(
             info.funds[0].amount >= price + protocol_fee + subject_fee,
             "Insufficient payment"
         );
+        let state3 = STATE.load(deps.storage)?;
+        println!("Test3 profee {:?}", state3.protocol_fee_percent);
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             println!("Before update: {:?}", state);
             let subject_map = state
@@ -196,6 +201,27 @@ pub fn buy_shares(
                 amount: the_amount_back,
             };
         }
+
+        let state2_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
+        println!("Updated Serialized state: {:?}", state2_bytes);
+        let hex_string: String = state2_bytes.iter().map(|byte| format!("{:02X}", byte)).collect();
+        println!("Hexadecimal representation: {}", hex_string);
+
+	// Convert bytes to String
+	let state_str = String::from_utf8_lossy(&state2_bytes).to_string();
+
+	// Deserialize the JSON string
+	let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
+
+	let state = match deserialized_state {
+	    Ok(s) => s,
+	    Err(err) => {
+		let std_err: StdError = StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
+		return Err(ContractError::Std(std_err));
+	    }
+	};
+
+	println!("Deserialized state: {:?}", state);
 
         Ok(Response::default())
     } else {
@@ -358,7 +384,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::GetState {} => {
             println!("Query: GetState");
-            let state = STATE.load(deps.storage)?;
+            //let state: State = STATE.load(deps.storage)?;
+            let state = get_deserialized_state(&deps)?;
             println!("Query Result: {:?}", state);
             to_json_binary::<State>(&state)
         }
@@ -451,4 +478,25 @@ pub fn get_share_balance(
             })
             .unwrap_or_default(),
     })
+}
+
+pub fn get_deserialized_state(deps: &Deps) -> Result<State, ContractError> {
+    // Load bytes from storage
+    let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
+
+    // Convert bytes to String
+    let state_str = String::from_utf8_lossy(&state_bytes).to_string();
+
+    // Deserialize the JSON string
+    let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
+
+    let state = match deserialized_state {
+        Ok(s) => s,
+        Err(err) => {
+            let std_err: StdError = StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
+            return Err(ContractError::Std(std_err));
+        }
+    };
+
+    Ok(state)
 }
