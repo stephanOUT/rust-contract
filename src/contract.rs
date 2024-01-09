@@ -4,13 +4,14 @@ use std::collections::HashMap;
 use crate::{
     msg::{
         ExecuteMsg, GetBuyPriceAfterFeeResponse, GetBuyPriceResponse, GetPriceResponse,
-        GetSellPriceAfterFeeResponse, GetSellPriceResponse, GetShareBalance, QueryMsg,
+        GetSellPriceAfterFeeResponse, GetSellPriceResponse, GetShareBalanceResponse,
+        InstantiateMsg, QueryMsg,
     },
     state::{State, STATE},
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128,
+    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -21,7 +22,12 @@ const CONTRACT_NAME: &str = "crates.io:my-first-contract";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Response, ContractError> {
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: InstantiateMsg,
+) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
         subject_fee_percent: Uint128::new(5),
@@ -307,30 +313,30 @@ pub fn sell_shares(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetPrice { supply, amount } => to_binary(&get_price(supply, amount)?),
+        QueryMsg::GetPrice { supply, amount } => to_json_binary(&get_price(supply, amount)?),
         QueryMsg::GetBuyPrice {
             shares_subject,
             amount,
-        } => to_binary(&get_buy_price(deps, shares_subject, amount)?),
+        } => to_json_binary(&get_buy_price(deps, shares_subject, amount)?),
         QueryMsg::GetSellPrice {
             shares_subject,
             amount,
-        } => to_binary(&get_sell_price(deps, shares_subject, amount)?),
+        } => to_json_binary(&get_sell_price(deps, shares_subject, amount)?),
         QueryMsg::GetBuyPriceAfterFee {
             shares_subject,
             amount,
-        } => to_binary(&get_buy_price_after_fee(deps, shares_subject, amount)?),
+        } => to_json_binary(&get_buy_price_after_fee(deps, shares_subject, amount)?),
         QueryMsg::GetSellPriceAfterFee {
             shares_subject,
             amount,
-        } => to_binary(&get_sell_price_after_fee(deps, shares_subject, amount)?),
+        } => to_json_binary(&get_sell_price_after_fee(deps, shares_subject, amount)?),
         QueryMsg::GetShareBalance {
             shares_subject,
             my_address,
-        } => to_binary(&get_share_balance(deps, my_address)?),
+        } => to_json_binary(&get_share_balance(deps, my_address)?),
         QueryMsg::GetState {} => {
             let state = STATE.load(deps.storage)?;
-            to_binary(&state)
+            to_json_binary(&state)
         }
     }
 }
@@ -404,10 +410,10 @@ pub fn get_sell_price_after_fee(
     })
 }
 
-pub fn get_share_balance(deps: Deps, my_address: Addr) -> StdResult<GetShareBalance> {
+pub fn get_share_balance(deps: Deps, my_address: Addr) -> StdResult<GetShareBalanceResponse> {
     let state = STATE.load(deps.storage)?;
 
-    Ok(GetShareBalance {
+    Ok(GetShareBalanceResponse {
         amount: state
             .shares_balance
             .get(&my_address)

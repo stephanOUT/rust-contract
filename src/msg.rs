@@ -53,3 +53,8 @@ pub struct GetBuyPriceAfterFeeResponse {
 pub struct GetSellPriceAfterFeeResponse {
     pub price: Uint128,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct GetShareBalanceResponse {
+    pub amount: Uint128,
+}
