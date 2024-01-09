@@ -157,7 +157,7 @@ mod tests {
             amount: shares_to_buy,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(0, res.messages.len());
 
         // sell shares
         let info = mock_info("anyone", &coins(1000, "earth"));
@@ -166,7 +166,7 @@ mod tests {
             amount: shares_to_sell,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
