@@ -128,8 +128,14 @@ pub fn buy_shares(
         .unwrap_or_default();
 
     if shares_supply > Uint128::zero() || shares_subject == info.sender {
-        let price_response: GetPriceResponse = get_price(shares_supply, amount)?;
+        let price_response: GetPriceResponse;
+        if shares_subject == info.sender && shares_supply.is_zero() {
+            price_response = get_price(amount, amount)?;
+        } else {
+            price_response = get_price(shares_supply, amount)?;
+        }
         let price: Uint128 = price_response.price;
+        println!("Price: {}", price);
         let protocol_fee =
             price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
         let subject_fee =
@@ -138,12 +144,17 @@ pub fn buy_shares(
             info.funds[0].amount >= price + protocol_fee + subject_fee,
             "Insufficient payment"
         );
-        let state3 = STATE.load(deps.storage)?;
-        println!("Test3 profee {:?}", state3.protocol_fee_percent);
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
             |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
+        )?;
+
+        //TODO: should only update supply if share_subject == info.sender and supply is zero?
+        SHARES_SUPPLY.update(
+            deps.storage,
+            &shares_subject,
+            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
         let the_protocol_fee = vec![Coin {
@@ -185,6 +196,7 @@ pub fn buy_shares(
 }
 
 pub fn get_price(supply: Uint128, amount: Uint128) -> StdResult<GetPriceResponse> {
+    println!("get_price: supply: {}, amount: {}", supply, amount);
     let sum1 = if supply.is_zero() {
         Uint128::zero()
     } else {

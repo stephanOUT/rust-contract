@@ -126,7 +126,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // buy shares
-        let info = mock_info("anyone", &coins(1, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             amount: shares_to_buy,
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn sell_shares() {
         let mut deps = mock_dependencies();
-        let shares_to_buy = Uint128::new(1);
+        let shares_to_buy = Uint128::new(2);
         let shares_to_sell = Uint128::new(1);
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -160,33 +160,34 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // buy shares
-        let info = mock_info("anyone", &coins(1000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: shares_to_buy,
+            amount: Uint128::new(2),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // sell shares
-        let info = mock_info("anyone", &coins(1000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg = ExecuteMsg::SellShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: shares_to_sell,
+            amount: Uint128::new(1),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
-        let state: State = from_json(&res).unwrap();
-        // assert_eq!(
-        //     Uint128::zero(),
-        //     state.shares_supply[&Addr::unchecked("shares_subject")]
-        // );
-        // assert_eq!(
-        //     Uint128::zero(),
-        //     state.shares_balance[&Addr::unchecked("shares_subject")][&Addr::unchecked("anyone")]
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::GetShareBalance {
+                shares_subject: Addr::unchecked("anyone"),
+                my_address: Addr::unchecked("anyone"),
+            },
+        )
+        .unwrap();
+        let shares_balance: GetShareBalanceResponse = from_json(&res).unwrap();
+        assert_eq!(shares_to_buy - shares_to_sell, shares_balance.amount);
         // );
     }
 
