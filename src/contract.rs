@@ -150,6 +150,7 @@ pub fn buy_shares(
             "Insufficient payment"
         );
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+            println!("Before update: {:?}", state);
             let subject_map = state
                 .shares_balance
                 .entry(shares_subject.clone())
@@ -162,6 +163,7 @@ pub fn buy_shares(
                 .entry(shares_subject.clone())
                 .or_insert(Uint128::zero());
             *supply += amount;
+            println!("After update: {:?}", state);
             Ok(state)
         })?;
 
@@ -170,7 +172,7 @@ pub fn buy_shares(
             amount: protocol_fee.into(),
         }];
         let protocol_fee_result = BankMsg::Send {
-            to_address: state.protocol_fee_destination.to_string(), // why would they make us convert to string?
+            to_address: state.protocol_fee_destination.to_string(),
             amount: the_protocol_fee,
         };
 
@@ -317,26 +319,48 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetBuyPrice {
             shares_subject,
             amount,
-        } => to_json_binary(&get_buy_price(deps, shares_subject, amount)?),
+        } => {
+            println!(
+                "Query: GetBuyPrice - shares_subject: {}, amount: {}",
+                shares_subject, amount
+            );
+            let result = get_buy_price(deps, shares_subject, amount)?;
+            println!("Query Result: {:?}", result);
+            to_json_binary::<GetBuyPriceResponse>(&result)
+        }
         QueryMsg::GetSellPrice {
             shares_subject,
             amount,
-        } => to_json_binary(&get_sell_price(deps, shares_subject, amount)?),
+        } => to_json_binary::<GetSellPriceResponse>(&get_sell_price(deps, shares_subject, amount)?),
         QueryMsg::GetBuyPriceAfterFee {
             shares_subject,
             amount,
-        } => to_json_binary(&get_buy_price_after_fee(deps, shares_subject, amount)?),
+        } => to_json_binary::<GetBuyPriceAfterFeeResponse>(&get_buy_price_after_fee(
+            deps,
+            shares_subject,
+            amount,
+        )?),
         QueryMsg::GetSellPriceAfterFee {
             shares_subject,
             amount,
-        } => to_json_binary(&get_sell_price_after_fee(deps, shares_subject, amount)?),
+        } => to_json_binary::<GetSellPriceAfterFeeResponse>(&get_sell_price_after_fee(
+            deps,
+            shares_subject,
+            amount,
+        )?),
         QueryMsg::GetShareBalance {
             shares_subject,
             my_address,
-        } => to_json_binary(&get_share_balance(deps, my_address)?),
+        } => to_json_binary::<GetShareBalanceResponse>(&get_share_balance(
+            deps,
+            shares_subject,
+            my_address,
+        )?),
         QueryMsg::GetState {} => {
+            println!("Query: GetState");
             let state = STATE.load(deps.storage)?;
-            to_json_binary(&state)
+            println!("Query Result: {:?}", state);
+            to_json_binary::<State>(&state)
         }
     }
 }
@@ -410,13 +434,16 @@ pub fn get_sell_price_after_fee(
     })
 }
 
-pub fn get_share_balance(deps: Deps, my_address: Addr) -> StdResult<GetShareBalanceResponse> {
+pub fn get_share_balance(
+    deps: Deps,
+    shares_subject: Addr,
+    my_address: Addr,
+) -> StdResult<GetShareBalanceResponse> {
     let state = STATE.load(deps.storage)?;
-
     Ok(GetShareBalanceResponse {
         amount: state
             .shares_balance
-            .get(&my_address)
+            .get(&shares_subject)
             .map(|balance_map| {
                 balance_map
                     .values()
