@@ -1,6 +1,4 @@
 #[cfg(not(feature = "library"))]
-use std::collections::HashMap;
-
 use crate::{
     msg::{
         ExecuteMsg, GetBuyPriceAfterFeeResponse, GetBuyPriceResponse, GetPriceResponse,
@@ -11,12 +9,10 @@ use crate::{
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, from_slice, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError,
-    StdResult, Uint128,
+    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use serde_json;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:my-first-contract";
@@ -33,14 +29,8 @@ pub fn instantiate(
         owner: info.sender.clone(),
         subject_fee_percent: Uint128::new(5),
         protocol_fee_percent: Uint128::new(5),
-        // shares_supply: HashMap::<Addr, Uint128>::new(),
-        /// shares_balance: HashMap::<Addr, HashMap<Addr, Uint128>>::new(),
         protocol_fee_destination: info.sender.clone(), // change later
     };
-
-    // Convert HashMaps to a JSON string
-    //let shares_supply_json = serde_json::to_string(&state.shares_supply).unwrap();
-    // let shares_balance_json = serde_json::to_string(&state.shares_balance).unwrap();
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -50,8 +40,6 @@ pub fn instantiate(
         .add_attribute("owner", info.sender)
         .add_attribute("subject_fee_percent", Uint128::new(5))
         .add_attribute("protocol_fee_percent", Uint128::new(5)))
-    //.add_attribute("shares_supply", shares_supply_json)
-    // .add_attribute("shares_balance", shares_balance_json))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -134,19 +122,13 @@ pub fn buy_shares(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    let supply = SHARES_SUPPLY
+
+    let shares_supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
-    // let supply = state
-    //     .shares_supply
-    //     .get(&shares_subject)
-    //     .cloned()
-    //     .unwrap_or_else(|| Uint128::zero());
-    if supply > Uint128::zero() || shares_subject == info.sender {
-        let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
-        println!("Serialized state: {:?}", state_bytes);
 
-        let price_response: GetPriceResponse = get_price(supply, amount)?;
+    if shares_supply > Uint128::zero() || shares_subject == info.sender {
+        let price_response: GetPriceResponse = get_price(shares_supply, amount)?;
         let price: Uint128 = price_response.price;
         let protocol_fee =
             price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
@@ -163,23 +145,6 @@ pub fn buy_shares(
             (&info.sender, &shares_subject),
             |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
         )?;
-        // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        //     println!("Before update: {:?}", state);
-        //     let subject_map = state
-        //         .shares_balance
-        //         .entry(shares_subject.clone())
-        //         .or_insert_with(|| HashMap::new());
-        //     *subject_map
-        //         .entry(info.sender.clone())
-        //         .or_insert(Uint128::zero()) += amount;
-        //     let supply = state
-        //         .shares_supply
-        //         .entry(shares_subject.clone())
-        //         .or_insert(Uint128::zero());
-        //     *supply += amount;
-        //     println!("After update: {:?}", state);
-        //     Ok(state)
-        // })?;
 
         let the_protocol_fee = vec![Coin {
             denom: info.funds[0].denom.clone(),
@@ -210,31 +175,6 @@ pub fn buy_shares(
                 amount: the_amount_back,
             };
         }
-
-        let state2_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
-        println!("Updated Serialized state: {:?}", state2_bytes);
-        let hex_string: String = state2_bytes
-            .iter()
-            .map(|byte| format!("{:02X}", byte))
-            .collect();
-        println!("Hexadecimal representation: {}", hex_string);
-
-        // Convert bytes to String
-        let state_str = String::from_utf8_lossy(&state2_bytes).to_string();
-
-        // Deserialize the JSON string
-        let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
-
-        let state = match deserialized_state {
-            Ok(s) => s,
-            Err(err) => {
-                let std_err: StdError =
-                    StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
-                return Err(ContractError::Std(std_err));
-            }
-        };
-
-        println!("Deserialized state: {:?}", state);
 
         Ok(Response::default())
     } else {
@@ -276,11 +216,6 @@ pub fn sell_shares(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    // let supply = state
-    //     .shares_supply
-    //     .get(&shares_subject)
-    //     .cloned()
-    //     .unwrap_or_else(|| Uint128::zero());
     let supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
@@ -294,11 +229,6 @@ pub fn sell_shares(
         let balance = SHARES_BALANCE
             .may_load(deps.storage, (&info.sender, &shares_subject))?
             .unwrap_or_default();
-        // let balance = state
-        //     .shares_balance
-        //     .get(&shares_subject)
-        //     .and_then(|balances| balances.get(&info.sender).copied())
-        //     .unwrap_or(Uint128::zero());
         if balance >= amount {
             SHARES_BALANCE.update(
                 deps.storage,
@@ -481,25 +411,3 @@ pub fn get_share_balance(
         .unwrap_or_default();
     Ok(GetShareBalanceResponse { amount: balance })
 }
-
-// pub fn get_deserialized_state(deps: &Deps) -> Result<State, ContractError> {
-//     // Load bytes from storage
-//     let state_bytes = deps.storage.get(b"state").ok_or(ContractError::NotFound)?;
-
-//     // Convert bytes to String
-//     let state_str = String::from_utf8_lossy(&state_bytes).to_string();
-
-//     // Deserialize the JSON string
-//     let deserialized_state: Result<State, serde_json::Error> = serde_json::from_str(&state_str);
-
-//     let state = match deserialized_state {
-//         Ok(s) => s,
-//         Err(err) => {
-//             let std_err: StdError =
-//                 StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
-//             return StdError::generic_err(format!("Failed to deserialize state: {:?}", err));
-//         }
-//     };
-
-//     Ok(state)
-// }

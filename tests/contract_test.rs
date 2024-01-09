@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_json, Addr, Uint128, from_binary};
-    use cw_storage_plus::Map;
+    use cosmwasm_std::{coins, from_json, Addr, Uint128};
     use rust_contract::contract::{execute, instantiate, query};
     use rust_contract::msg::{
         ExecuteMsg, GetBuyPriceAfterFeeResponse, GetBuyPriceResponse, GetPriceResponse,
@@ -24,7 +23,15 @@ mod tests {
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let state: State = from_json(&res).unwrap();
-        assert_eq!(Uint128::new(5), state.protocol_fee_percent);
+        assert_eq!(
+            State {
+                owner: Addr::unchecked("creator"),
+                subject_fee_percent: Uint128::new(5),
+                protocol_fee_percent: Uint128::new(5),
+                protocol_fee_destination: Addr::unchecked("creator"),
+            },
+            state
+        );
     }
 
     #[test]
@@ -119,36 +126,26 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // buy shares
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("anyone", &coins(1, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
-            shares_subject: Addr::unchecked("creator"),
+            shares_subject: Addr::unchecked("anyone"),
             amount: shares_to_buy,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // it worked, let's query  the state
-        //let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap(); // error is here
-        println!("1");
-       // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {});
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetShareBalance { shares_subject: Addr::unchecked("creator"), my_address: Addr::unchecked("creator") }).unwrap();
-        println!("2");
-        // if let Err(err) = res {
-        //     panic!("Query failed: {:?}", err);
-        // }
-        println!("3");
-      //  let res = res.unwrap();
-        println!("4");
-       // let loaded: Map<(&Addr, &Addr), Uint128> = from_binary(&res).unwrap();
-        let shares_balance: GetShareBalanceResponse = from_json(&res).unwrap(); 
-        assert_eq!(
-            shares_to_buy,
-            shares_balance.amount
-        );
-        assert_eq!(
-            shares_to_buy,
-            shares_balance.amount
-        );
+        // it worked, let's query the shares balance
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::GetShareBalance {
+                shares_subject: Addr::unchecked("anyone"),
+                my_address: Addr::unchecked("anyone"),
+            },
+        )
+        .unwrap();
+        let shares_balance: GetShareBalanceResponse = from_json(&res).unwrap();
+        assert_eq!(shares_to_buy, shares_balance.amount);
     }
 
     #[test]
@@ -284,7 +281,7 @@ mod tests {
             shares_subject: Addr::unchecked("creator"),
             amount: Uint128::new(1),
         };
-        
+
         let res = query(deps.as_ref(), mock_env(), msg).unwrap();
         let get_buy_price_response: GetBuyPriceAfterFeeResponse = from_json(&res).unwrap();
         assert_eq!(Uint128::new(0), get_buy_price_response.price);
