@@ -300,10 +300,6 @@ pub fn sell_shares(
         //     .and_then(|balances| balances.get(&info.sender).copied())
         //     .unwrap_or(Uint128::zero());
         if balance >= amount {
-            let supply = SHARES_SUPPLY
-                .may_load(deps.storage, &shares_subject)?
-                .unwrap_or_default();
-
             SHARES_BALANCE.update(
                 deps.storage,
                 (&info.sender, &shares_subject),
@@ -319,22 +315,6 @@ pub fn sell_shares(
                     Ok(supply.unwrap_or_default() + amount)
                 },
             )?;
-
-            // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            //     let subject_map = state
-            //         .shares_balance
-            //         .entry(shares_subject.clone())
-            //         .or_insert_with(|| HashMap::new());
-            //     *subject_map
-            //         .entry(info.sender.clone())
-            //         .or_insert(Uint128::zero()) -= amount;
-            //     let supply = state
-            //         .shares_supply
-            //         .entry(shares_subject.clone())
-            //         .or_insert(Uint128::zero());
-            //     *supply -= amount;
-            //     Ok(state)
-            // })?;
 
             let total_withdrawal = price - protocol_fee - subject_fee;
             let funds = vec![Coin {
@@ -427,7 +407,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             // let state = get_deserialized_state(&deps)?;
             println!("Query Result: {:?}", state);
             to_json_binary::<State>(&state)
-        },
+        }
     }
 }
 

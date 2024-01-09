@@ -165,7 +165,7 @@ mod tests {
         // buy shares
         let info = mock_info("anyone", &coins(1000, "earth"));
         let msg = ExecuteMsg::BuyShares {
-            shares_subject: Addr::unchecked("shares_subject"),
+            shares_subject: Addr::unchecked("anyone"),
             amount: shares_to_buy,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -174,7 +174,7 @@ mod tests {
         // sell shares
         let info = mock_info("anyone", &coins(1000, "earth"));
         let msg = ExecuteMsg::SellShares {
-            shares_subject: Addr::unchecked("shares_subject"),
+            shares_subject: Addr::unchecked("anyone"),
             amount: shares_to_sell,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
