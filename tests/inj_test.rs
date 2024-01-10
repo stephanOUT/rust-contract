@@ -1,5 +1,5 @@
 mod inj_tests {
-    use cosmwasm_std::{Addr, Coin, Uint128};
+    use cosmwasm_std::{to_json_string, Addr, Coin, Uint128};
     use injective_test_tube::{Account, InjectiveTestApp, Module, Wasm};
     use rust_contract::{
         msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
@@ -9,6 +9,7 @@ mod inj_tests {
     #[test]
     fn test() {
         let app = InjectiveTestApp::new();
+        // init two accounts, one admin, one user
         let accs = app
             .init_accounts(
                 &[
@@ -19,6 +20,7 @@ mod inj_tests {
             )
             .unwrap();
         let admin = &accs[0];
+        let user = &accs[1];
         // `Wasm` is the module we use to interact with cosmwasm releated logic on the appchain
         // it implements `Module` trait which you will see more later.
         let wasm = Wasm::new(&app);
@@ -55,14 +57,18 @@ mod inj_tests {
         );
 
         // have account 2 buy a share of account 2
+
+        let funds = &[Coin::new(100000000000000000, "inj")];
+        let s = to_json_string(&funds).unwrap();
+        println!("funds: {:?}", s);
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
-                shares_subject: Addr::unchecked(accs[1].address()),
+                shares_subject: Addr::unchecked(user.address()),
                 amount: Uint128::new(1),
             },
-            &[Coin::new(100000000000000000, "inj")],
-            &accs[1],
+            funds,
+            user,
         )
         .unwrap();
 
