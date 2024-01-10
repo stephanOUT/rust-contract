@@ -54,7 +54,6 @@ mod inj_tests {
             contract_state.protocol_fee_destination
         );
 
-
         // have account 2 buy a share of account 2
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
@@ -66,5 +65,16 @@ mod inj_tests {
             &accs[1],
         )
         .unwrap();
+
+        // set fee destination to different address
+        // wasm.execute::<ExecuteMsg>(
+        //     &contract_addr,
+        //     &ExecuteMsg::SetFeeDestination {
+        //         fee_destination: Addr::unchecked(accs[1].address()),
+        //     },
+        //     &[],
+        //     &accs[0],
+        // )
+        // .unwrap();
     }
 }

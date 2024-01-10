@@ -464,7 +464,7 @@ pub fn buy_shares(
         )?;
 
         let the_protocol_fee = vec![Coin {
-            denom: info.funds[0].denom.clone(),
+            denom: "inj".to_string(),
             amount: protocol_fee.into(),
         }];
         let protocol_fee_result = BankMsg::Send {
@@ -477,7 +477,7 @@ pub fn buy_shares(
         });*/
 
         let the_subject_fee = vec![Coin {
-            denom: info.funds[0].denom.clone(),
+            denom: "inj".to_string(),
             amount: subject_fee.into(),
         }];
         let subject_fee_result = BankMsg::Send {
@@ -492,7 +492,7 @@ pub fn buy_shares(
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
             let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
             let the_amount_back = vec![Coin {
-                denom: info.funds[0].denom.clone(),
+                denom: "inj".to_string(),
                 amount: amount_back.into(),
             }];
             let amount_back_result = BankMsg::Send {
@@ -530,7 +530,7 @@ pub fn buy_shares(
         )?;
 
         let the_protocol_fee = vec![Coin {
-            denom: info.funds[0].denom.clone(),
+            denom: "inj".to_string(),
             amount: protocol_fee.into(),
         }];
         let protocol_fee_result = BankMsg::Send {
@@ -539,7 +539,7 @@ pub fn buy_shares(
         };
 
         let the_subject_fee = vec![Coin {
-            denom: info.funds[0].denom.clone(),
+            denom: "inj".to_string(),
             amount: subject_fee.into(),
         }];
         let subject_fee_result = BankMsg::Send {
@@ -550,7 +550,7 @@ pub fn buy_shares(
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
             let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
             let the_amount_back = vec![Coin {
-                denom: info.funds[0].denom.clone(),
+                denom: "inj".to_string(),
                 amount: amount_back.into(),
             }];
             let amount_back_result = BankMsg::Send {
