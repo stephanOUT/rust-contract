@@ -132,7 +132,10 @@ mod tests {
             amount: shares_to_buy,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(3, res.messages.len());
+
+        // check how much user gets back
+        println!("{:?}", res.messages);
 
         // it worked, let's query the shares balance
         let res = query(
