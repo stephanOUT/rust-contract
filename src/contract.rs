@@ -9,7 +9,7 @@ use crate::{
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128,
+    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, CosmosMsg,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -254,22 +254,22 @@ pub fn sell_shares(
                 deps.storage,
                 &shares_subject,
                 |supply: Option<Uint128>| -> StdResult<_> {
-                    Ok(supply.unwrap_or_default() + amount)
+                    Ok(supply.unwrap_or_default() - amount)
                 },
             )?;
 
             let total_withdrawal = price - protocol_fee - subject_fee;
             let funds = vec![Coin {
-                denom: info.funds[0].denom.clone(),
+                denom: "inj".to_string(),
                 amount: total_withdrawal,
             }];
-            let subject_fee_result = BankMsg::Send {
+            let funds_result = BankMsg::Send {
                 to_address: info.sender.to_string(),
                 amount: funds,
             };
 
             let the_protocol_fee = vec![Coin {
-                denom: info.funds[0].denom.clone(),
+                denom: "inj".to_string(),
                 amount: protocol_fee.into(),
             }];
             let protocol_fee_result = BankMsg::Send {
@@ -278,7 +278,7 @@ pub fn sell_shares(
             };
 
             let the_subject_fee = vec![Coin {
-                denom: info.funds[0].denom.clone(),
+                denom: "inj".to_string(),
                 amount: subject_fee.into(),
             }];
             let subject_fee_result = BankMsg::Send {
@@ -286,7 +286,8 @@ pub fn sell_shares(
                 amount: the_subject_fee,
             };
 
-            Ok(Response::default())
+            let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(funds_result);
+            Ok(response)
         } else {
             Err(ContractError::Std(StdError::generic_err(
                 "Insufficient shares",
@@ -470,6 +471,10 @@ pub fn buy_shares(
             to_address: state.protocol_fee_destination.to_string(),
             amount: the_protocol_fee,
         };
+        /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: state.protocol_fee_destination.to_string(),
+            amount: the_protocol_fee,
+        });*/
 
         let the_subject_fee = vec![Coin {
             denom: info.funds[0].denom.clone(),
@@ -479,8 +484,12 @@ pub fn buy_shares(
             to_address: shares_subject.to_string(),
             amount: the_subject_fee,
         };
+        /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: shares_subject.to_string(),
+            amount: the_subject_fee,
+        });*/
 
-        if info.funds[0].amount > (price + protocol_fee + subject_fee) {
+        //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
             let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
             let the_amount_back = vec![Coin {
                 denom: info.funds[0].denom.clone(),
@@ -490,10 +499,10 @@ pub fn buy_shares(
                 to_address: info.sender.to_string(),
                 amount: the_amount_back,
             };
-        }
+        //}
 
-
-        Ok(Response::default())
+        let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(amount_back_result);
+        Ok(response)
     }
     // anyone buying shares
     else if shares_supply > Uint128::zero() {
@@ -517,7 +526,7 @@ pub fn buy_shares(
         SHARES_SUPPLY.update(
             deps.storage,
             &shares_subject,
-            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() - amount) },
+            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
         let the_protocol_fee = vec![Coin {
@@ -538,7 +547,7 @@ pub fn buy_shares(
             amount: the_subject_fee,
         };
 
-        if info.funds[0].amount > (price + protocol_fee + subject_fee) {
+        //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
             let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
             let the_amount_back = vec![Coin {
                 denom: info.funds[0].denom.clone(),
@@ -548,10 +557,11 @@ pub fn buy_shares(
                 to_address: info.sender.to_string(),
                 amount: the_amount_back,
             };
-        }
+        //}
 
 
-        Ok(Response::default())
+        let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(amount_back_result);
+        Ok(response)
     } else {
         Err(ContractError::Std(StdError::generic_err(
             "buy_shares: supply is zero",

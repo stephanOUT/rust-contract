@@ -1,0 +1,1 @@
+bf63e2d15975763c7e5be078911a821a9bfaa64adc4d093711cea2376c10b09e  rust_contract.wasm
