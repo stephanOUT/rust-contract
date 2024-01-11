@@ -9,7 +9,8 @@ use crate::{
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, CosmosMsg, coins,
+    coins, entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, StdError,
+    StdResult, Uint128,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -286,7 +287,10 @@ pub fn sell_shares(
                 amount: the_subject_fee,
             };
 
-            let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(funds_result);
+            let response = Response::new()
+                .add_message(protocol_fee_result)
+                .add_message(subject_fee_result)
+                .add_message(funds_result);
             Ok(response)
         } else {
             Err(ContractError::Std(StdError::generic_err(
@@ -443,10 +447,9 @@ pub fn buy_shares(
         let price_response = get_price(amount, amount)?;
         let price: Uint128 = price_response.price;
         println!("Price: {}", price);
-        let protocol_fee =
-            price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
-        let subject_fee =
-            price * state.subject_fee_percent / Uint128::new(1_000_000_000_000_000_000);
+        let protocol_fee = price * state.protocol_fee_percent / Uint128::new(100);
+        let subject_fee = price * state.subject_fee_percent / Uint128::new(100);
+        println!("subject_fee: {}", subject_fee);
         println!("protocol_fee: {}", protocol_fee);
         assert!(
             info.funds[0].amount >= price + protocol_fee + subject_fee,
@@ -464,51 +467,35 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
-        // let the_protocol_fee = vec![Coin {
-        //     denom: "inj".to_string(),
-        //     amount: protocol_fee.into(),
-        // }];
-        deps.api.debug("send protocol fee (NEW USER)");
+        deps.api.debug("send protocol fee");
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: coins(1, "inj"),
+            amount: coins(protocol_fee.into(), "inj"),
         };
         deps.api.debug("success");
 
-        /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
-            to_address: state.protocol_fee_destination.to_string(),
-            amount: the_protocol_fee,
-        });*/
-
-        deps.api.debug("send subject fee (NEW USER)");
-        // let the_subject_fee = vec![Coin {
-        //     denom: "inj".to_string(),
-        //     amount: subject_fee.into(),
-        // }];
-        
+        deps.api.debug("send subject fee");
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: coins(1, "inj"),
+            amount: coins(subject_fee.into(), "inj"),
         };
         deps.api.debug("success");
-        /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
-            to_address: shares_subject.to_string(),
-            amount: the_subject_fee,
-        });*/
 
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-            let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
-            let the_amount_back = vec![Coin {
-                denom: "inj".to_string(),
-                amount: amount_back.into(),
-            }];
-            let amount_back_result = BankMsg::Send {
-                to_address: info.sender.to_string(),
-                amount: the_amount_back,
-            };
+        deps.api.debug("send amount back");
+        let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
+        let amount_back_result = BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: coins(amount_back.into(), "inj"),
+        };
+        deps.api.debug("success");
+
         //}
 
-        let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(amount_back_result);
+        let response = Response::new()
+            .add_message(protocol_fee_result)
+            .add_message(subject_fee_result)
+            .add_message(amount_back_result);
         Ok(response)
     }
     // anyone buying shares
@@ -556,19 +543,21 @@ pub fn buy_shares(
         };
 
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-            let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
-            let the_amount_back = vec![Coin {
-                denom: "inj".to_string(),
-                amount: amount_back.into(),
-            }];
-            let amount_back_result = BankMsg::Send {
-                to_address: info.sender.to_string(),
-                amount: the_amount_back,
-            };
+        let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
+        let the_amount_back = vec![Coin {
+            denom: "inj".to_string(),
+            amount: amount_back.into(),
+        }];
+        let amount_back_result = BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: the_amount_back,
+        };
         //}
 
-
-        let response = Response::new().add_message(protocol_fee_result).add_message(subject_fee_result).add_message(amount_back_result);
+        let response = Response::new()
+            .add_message(protocol_fee_result)
+            .add_message(subject_fee_result)
+            .add_message(amount_back_result);
         Ok(response)
     } else {
         Err(ContractError::Std(StdError::generic_err(

@@ -1,6 +1,7 @@
 mod inj_tests {
-    use cosmwasm_std::{to_json_string, Addr, Coin, Uint128};
-    use injective_test_tube::{Account, InjectiveTestApp, Module, Wasm};
+    use cosmwasm_std::{Addr, Coin, Uint128};
+    use injective_std::types::cosmos::bank::v1beta1::QueryBalanceRequest;
+    use injective_test_tube::{Account, Bank, InjectiveTestApp, Module, Wasm};
     use rust_contract::{
         msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
         state::State,
@@ -24,7 +25,8 @@ mod inj_tests {
         // `Wasm` is the module we use to interact with cosmwasm releated logic on the appchain
         // it implements `Module` trait which you will see more later.
         let wasm = Wasm::new(&app);
-
+        let bank = Bank::new(&app);
+    
         // Load compiled wasm bytecode
         let wasm_byte_code = std::fs::read("./artifacts/rust_contract-aarch64.wasm").unwrap();
         let code_id = wasm
@@ -57,9 +59,16 @@ mod inj_tests {
         );
 
         // have user buy a share of user
+
+        let balance_request = QueryBalanceRequest {
+            address: user.address(),
+            denom: "inj".to_string(),
+        };
+   
+        let balanceResponse = bank.query_balance(&balance_request.into()).unwrap();
+        println!("user balance before transaction: {:?}", balanceResponse.balance);
+
         let funds = &[Coin::new(100000000000000000, "inj")];
-        let s = to_json_string(&funds).unwrap();
-        println!("funds: {:?}", s);
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
@@ -71,6 +80,14 @@ mod inj_tests {
         )
         .unwrap();
 
+
+        let balance_request = QueryBalanceRequest {
+            address: user.address(),
+            denom: "inj".to_string(),
+        };
+   
+        let balanceResponse = bank.query_balance(&balance_request.into()).unwrap();
+        println!("user balance after transaction: {:?}", balanceResponse.balance);
         // set fee destination to different address
         // wasm.execute::<ExecuteMsg>(
         //     &contract_addr,

@@ -16,4 +16,7 @@ schemars = "0.8.16"
 serde = "1.0.195"
 cw-storage-plus = "1.2.0"
 #cw-multi-test = "0.20.0"
-injective-test-tube = "1.1.6"
+
+#uncomment these to run inj_test (will break builds)
+#injective-test-tube = "1.1.6"
+#injective-std = "0.1.5"
