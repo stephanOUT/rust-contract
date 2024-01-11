@@ -19,14 +19,9 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    GetPrice { supply: Uint128, amount: Uint128 },
-    GetBuyPrice { shares_subject: Addr, amount: Uint128 },
-    GetSellPrice { shares_subject: Addr, amount: Uint128 },
-    GetBuyPriceAfterFee { shares_subject: Addr, amount: Uint128 },
-    GetSellPriceAfterFee { shares_subject: Addr, amount: Uint128 },
+    GetPrice { shares_subject: Addr, amount: Uint128, with_fees: bool },
     GetShareBalance { shares_subject: Addr, my_address: Addr },
     GetState { },
-
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

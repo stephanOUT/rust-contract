@@ -71,7 +71,6 @@ mod inj_tests {
             balance_response.balance
         );
 
-        let funds = &[Coin::new(100000000000000000, "inj")];
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
@@ -172,10 +171,7 @@ mod inj_tests {
         };
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
-        println!(
-            "user 1: query_balance: {:?}",
-            balance_response.balance
-        );
+        println!("user 1: balance before: {:?}", balance_response.balance);
 
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
@@ -194,10 +190,7 @@ mod inj_tests {
         };
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
-        println!(
-            "user 1: query_balance: {:?}",
-            balance_response.balance
-        );
+        println!("user 1: balance after: {:?}", balance_response.balance);
 
         println!("user 2: buying initial share");
         let balance_request = QueryBalanceRequest {
@@ -206,10 +199,7 @@ mod inj_tests {
         };
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
-        println!(
-            "user 2: query_balance: {:?}",
-            balance_response.balance
-        );
+        println!("user 2: balance before: {:?}", balance_response.balance);
 
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
@@ -228,9 +218,34 @@ mod inj_tests {
         };
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
-        println!(
-            "user 2: query_balance: {:?}",
-            balance_response.balance
-        );
+        println!("user 2: balance after: {:?}", balance_response.balance);
+
+        println!("user 2: buying user 1 share");
+        let balance_request = QueryBalanceRequest {
+            address: user_2.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!("user 2: balance before: {:?}", balance_response.balance);
+        let funds = &[Coin::new(100000000000000000, "inj")];
+        wasm.execute::<ExecuteMsg>(
+            &contract_addr,
+            &ExecuteMsg::BuyShares {
+                shares_subject: Addr::unchecked(user.address()),
+                amount: Uint128::new(1),
+            },
+            funds, // send funds when buying shares
+            user_2,
+        )
+        .unwrap();
+
+        let balance_request = QueryBalanceRequest {
+            address: user_2.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!("user 2: balance after: {:?}", balance_response.balance);
     }
 }
