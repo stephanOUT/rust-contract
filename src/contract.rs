@@ -18,6 +18,7 @@ use cw2::set_contract_version;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:my-first-contract";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const ONE_INJ: Uint128 = Uint128::new(1000000000000000000);
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -28,8 +29,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_fee_percent: Uint128::new(5),
-        protocol_fee_percent: Uint128::new(5),
+        subject_fee_percent: Uint128::new(10),
+        protocol_fee_percent: Uint128::new(10), // 10 makes it easy to test
         protocol_fee_destination: info.sender.clone(), // change later
     };
 
@@ -39,8 +40,8 @@ pub fn instantiate(
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
-        .add_attribute("subject_fee_percent", Uint128::new(5))
-        .add_attribute("protocol_fee_percent", Uint128::new(5)))
+        .add_attribute("subject_fee_percent", Uint128::new(10))
+        .add_attribute("protocol_fee_percent", Uint128::new(10)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -69,6 +70,10 @@ pub fn execute(
             amount,
         } => sell_shares(deps, info, shares_subject, amount),
     }
+}
+
+fn calculate_fee(price: Uint128, fee_percent: Uint128) -> Uint128 {
+    return price * fee_percent / Uint128::new(100);
 }
 
 pub fn set_fee_destination(
@@ -134,14 +139,16 @@ pub fn buy_shares(
         let price_response = get_price(amount, amount)?;
         let price: Uint128 = price_response.price;
         println!("Price: {}", price);
-        let protocol_fee = price * state.protocol_fee_percent ;
-        let subject_fee = price * state.subject_fee_percent ;
+        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
+        let subject_fee = calculate_fee(price, state.subject_fee_percent);
+        let total = price + protocol_fee + subject_fee;
         println!("subject_fee: {}", subject_fee);
         println!("protocol_fee: {}", protocol_fee);
-        // assert!(
-        //     info.funds[0].amount >= price + protocol_fee + subject_fee,
-        //     "Insufficient payment"
-        // );
+        println!("total: {}", total);
+        assert!(
+            info.funds[0].amount >= total,
+            "Insufficient payment"
+        );
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
@@ -184,12 +191,14 @@ pub fn buy_shares(
         let price_response = get_price(shares_supply, amount)?;
         let price: Uint128 = price_response.price;
         println!("Price: {}", price);
-        let protocol_fee =
-            price * state.protocol_fee_percent / Uint128::new(100);
-        let subject_fee =
-            price * state.subject_fee_percent / Uint128::new(100);
+        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
+        let subject_fee = calculate_fee(price, state.subject_fee_percent);
+        let total = price + protocol_fee + subject_fee;
+        println!("subject_fee: {}", subject_fee);
+        println!("protocol_fee: {}", protocol_fee);
+        println!("total: {}", total);
         assert!(
-            info.funds[0].amount >= price + protocol_fee + subject_fee,
+            info.funds[0].amount >= total,
             "Insufficient payment"
         );
         SHARES_BALANCE.update(
@@ -204,45 +213,36 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
-        // let the_protocol_fee = vec![Coin {
-        //     denom: "inj".to_string(),
-        //     amount: protocol_fee.into(),
-        // }];
-        deps.api.debug("send protocol fee ");
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: coins(1, "inj"),
+            amount: coins(protocol_fee.into(), "inj"),
         };
 
-        let the_subject_fee = vec![Coin {
-            denom: "inj".to_string(),
-            amount: subject_fee.into(),
-        }];
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: the_subject_fee,
+            amount: coins(subject_fee.into(), "inj"),
         };
 
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-        let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
-        let the_amount_back = vec![Coin {
-            denom: "inj".to_string(),
-            amount: amount_back.into(),
-        }];
-        let amount_back_result = BankMsg::Send {
-            to_address: info.sender.to_string(),
-            amount: the_amount_back,
-        };
+        // let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
+        // let the_amount_back = vec![Coin {
+        //     denom: "inj".to_string(),
+        //     amount: amount_back.into(),
+        // }];
+        // let amount_back_result = BankMsg::Send {
+        //     to_address: info.sender.to_string(),
+        //     amount: the_amount_back,
+        // };
         //}
 
         let response = Response::new()
             .add_message(protocol_fee_result)
-            .add_message(subject_fee_result)
-            .add_message(amount_back_result);
+            .add_message(subject_fee_result);
+         //   .add_message(amount_back_result);
         Ok(response)
     } else {
         Err(ContractError::Std(StdError::generic_err(
-            "buy_shares: supply is zero",
+            "buy_shares: supply is zero, user must buy own share first",
         )))
     }
 }
@@ -268,7 +268,7 @@ pub fn get_price(supply: Uint128, amount: Uint128) -> StdResult<GetPriceResponse
     };
 
     let summation = sum2 - sum1;
-    let the_price = (summation * Uint128::new(1000000000000000000)) / Uint128::new(16000);
+    let the_price = summation * ONE_INJ / Uint128::new(16000);
     Ok(GetPriceResponse { price: the_price })
 }
 pub fn sell_shares(
@@ -477,4 +477,3 @@ pub fn get_share_balance(
         .unwrap_or_default();
     Ok(GetShareBalanceResponse { amount: balance })
 }
-

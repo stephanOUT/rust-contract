@@ -152,7 +152,35 @@ mod tests {
     }
 
     #[test]
-    fn sell_shares() {
+    fn buy_shares_of_someone_else() {
+        // init
+        let mut deps = mock_dependencies();
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = InstantiateMsg {};
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // user 1 buys 2 shares of user 1
+        let info = mock_info("user_1", &coins(1000000000000000000, "earth"));
+        let msg: ExecuteMsg = ExecuteMsg::BuyShares {
+            shares_subject: Addr::unchecked("user_1"),
+            amount: Uint128::new(2),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+
+        // user 2 buys 1 share of user 1
+        let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
+        let msg: ExecuteMsg = ExecuteMsg::BuyShares {
+            shares_subject: Addr::unchecked("user_1"),
+            amount: Uint128::new(1),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+    }
+
+    #[test]
+    fn sell_self_shares() {
         let mut deps = mock_dependencies();
         let shares_to_buy = Uint128::new(2);
         let shares_to_sell = Uint128::new(1);
