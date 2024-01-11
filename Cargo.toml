@@ -18,5 +18,5 @@ cw-storage-plus = "1.2.0"
 #cw-multi-test = "0.20.0"
 
 # uncomment these to run inj_test (will break builds)
-injective-test-tube = "1.1.6"
-injective-std = "0.1.5"
+#injective-test-tube = "1.1.6"
+#injective-std = "0.1.5"

@@ -1,13 +1,12 @@
-use crate::user::query::get_price_query;
 #[cfg(not(feature = "library"))]
 use crate::{
     msg::{
-        ExecuteMsg, GetBuyPriceAfterFeeResponse, GetBuyPriceResponse, GetPriceResponse,
-        GetSellPriceAfterFeeResponse, GetSellPriceResponse, GetShareBalanceResponse,
+        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse,
         InstantiateMsg, QueryMsg,
     },
-    state::{State, SHARES_BALANCE, SHARES_SUPPLY, STATE},
+    state::{State, SHARES_BALANCE, STATE},
     user::execute::{buy_shares, sell_shares},
+    user::query::get_price_query,
     owner::execute::{set_fee_destination, set_protocol_fee_percent, set_subject_fee_percent},
     ContractError,
 };
@@ -69,38 +68,6 @@ pub fn execute(
             amount,
         } => sell_shares(deps, info, shares_subject, amount),
     }
-}
-
-
-
-pub fn set_protocol_fee_percent(
-    deps: DepsMut,
-    info: MessageInfo,
-    fee_percent: Uint128,
-) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        if info.sender != state.owner {
-            return Err(ContractError::Unauthorized {});
-        }
-        state.protocol_fee_percent = fee_percent;
-        Ok(state)
-    })?;
-    Ok(Response::new().add_attribute("method", "set_protocol_fee_percent"))
-}
-
-pub fn set_subject_fee_percent(
-    deps: DepsMut,
-    info: MessageInfo,
-    fee_percent: Uint128,
-) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        if info.sender != state.owner {
-            return Err(ContractError::Unauthorized {});
-        }
-        state.subject_fee_percent = fee_percent;
-        Ok(state)
-    })?;
-    Ok(Response::new().add_attribute("method", "set_subject_fee_percent"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
