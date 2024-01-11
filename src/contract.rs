@@ -1,16 +1,14 @@
+use crate::user::query::get_share_balance;
 #[cfg(not(feature = "library"))]
 use crate::{
-    msg::{
-        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse,
-        InstantiateMsg, QueryMsg,
-    },
-    state::{State, SHARES_BALANCE, STATE},
+    msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
+    owner::execute::{set_fee_destination, set_protocol_fee_percent, set_subject_fee_percent},
+    state::{State, STATE},
     user::execute::{buy_shares, sell_shares},
     user::query::get_price_query,
-    owner::execute::{set_fee_destination, set_protocol_fee_percent, set_subject_fee_percent},
     ContractError,
 };
-use cosmwasm_std::{entry_point, to_json_binary, Addr, Binary, Deps, StdResult, Uint128};
+use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 
@@ -77,39 +75,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             shares_subject,
             amount,
             with_fees,
-        } => to_json_binary::<GetPriceResponse>(&get_price_query(deps, shares_subject, amount, with_fees)?),
-        // QueryMsg::GetBuyPrice {
-        //     shares_subject,
-        //     amount,
-        // } => {
-        //     println!(
-        //         "Query: GetBuyPrice - shares_subject: {}, amount: {}",
-        //         shares_subject, amount
-        //     );
-        //     let result = get_buy_price(deps, shares_subject, amount)?;
-        //     println!("Query Result: {:?}", result);
-        //     to_json_binary::<GetBuyPriceResponse>(&result)
-        // }
-        // QueryMsg::GetSellPrice {
-        //     shares_subject,
-        //     amount,
-        // } => to_json_binary::<GetSellPriceResponse>(&get_sell_price(deps, shares_subject, amount)?),
-        // QueryMsg::GetBuyPriceAfterFee {
-        //     shares_subject,
-        //     amount,
-        // } => to_json_binary::<GetBuyPriceAfterFeeResponse>(&get_price_with_fees(
-        //     deps,
-        //     shares_subject,
-        //     amount,
-        // )?),
-        // QueryMsg::GetSellPriceAfterFee {
-        //     shares_subject,
-        //     amount,
-        // } => to_json_binary::<GetSellPriceAfterFeeResponse>(&get_sell_price_after_fee(
-        //     deps,
-        //     shares_subject,
-        //     amount,
-        // )?),
+        } => to_json_binary::<GetPriceResponse>(&get_price_query(
+            deps,
+            shares_subject,
+            amount,
+            with_fees,
+        )?),
         QueryMsg::GetShareBalance {
             shares_subject,
             my_address,
@@ -126,59 +97,4 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary::<State>(&state)
         }
     }
-}
-
-// pub fn get_buy_price(
-//     deps: Deps,
-//     shares_subject: Addr,
-//     amount: Uint128,
-// ) -> StdResult<GetBuyPriceResponse> {
-//     let state = STATE.load(deps.storage)?;
-//     let supply = SHARES_SUPPLY
-//         .may_load(deps.storage, &shares_subject)?
-//         .unwrap_or_default();
-//     let buy_price_response = get_price(supply, amount)?;
-//     let buy_price: Uint128 = buy_price_response.price;
-//     Ok(GetBuyPriceResponse { price: buy_price })
-// }
-
-// pub fn get_sell_price(
-//     deps: Deps,
-//     shares_subject: Addr,
-//     amount: Uint128,
-// ) -> StdResult<GetSellPriceResponse> {
-//     let state = STATE.load(deps.storage)?;
-//     let supply = SHARES_SUPPLY
-//         .may_load(deps.storage, &shares_subject)?
-//         .unwrap_or_default();
-//     let sell_price_response: GetPriceResponse = get_price(supply - amount, amount)?;
-//     let sell_price: Uint128 = sell_price_response.price;
-//     Ok(GetSellPriceResponse { price: sell_price })
-// }
-
-// pub fn get_sell_price_after_fee(
-//     deps: Deps,
-//     shares_subject: Addr,
-//     amount: Uint128,
-// ) -> StdResult<GetSellPriceAfterFeeResponse> {
-//     let state = STATE.load(deps.storage)?;
-//     let price_response: GetSellPriceResponse = get_sell_price(deps, shares_subject, amount)?;
-//     let price: Uint128 = price_response.price;
-//     let protocol_fee = price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
-//     let subject_fee = price * state.subject_fee_percent / Uint128::new(1_000_000_000_000_000_000);
-//     let return_price = price - protocol_fee - subject_fee;
-//     Ok(GetSellPriceAfterFeeResponse {
-//         price: return_price,
-//     })
-// }
-
-pub fn get_share_balance(
-    deps: Deps,
-    shares_subject: Addr,
-    my_address: Addr,
-) -> StdResult<GetShareBalanceResponse> {
-    let balance = SHARES_BALANCE
-        .may_load(deps.storage, (&my_address, &shares_subject))?
-        .unwrap_or_default();
-    Ok(GetShareBalanceResponse { amount: balance })
 }

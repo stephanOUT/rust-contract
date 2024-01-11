@@ -1,13 +1,13 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+use crate::state::State;
+
+#[cw_serde]
 pub struct InstantiateMsg {
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     SetFeeDestination { fee_destination: Addr },
     SetProtocolFeePercent { protocol_fee_percent: Uint128 },
@@ -16,40 +16,22 @@ pub enum ExecuteMsg {
     SellShares { shares_subject: Addr, amount: Uint128 },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(GetPriceResponse)]
     GetPrice { shares_subject: Addr, amount: Uint128, with_fees: bool },
+    #[returns(GetShareBalanceResponse)]
     GetShareBalance { shares_subject: Addr, my_address: Addr },
+    #[returns(State)]
     GetState { },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct GetPriceResponse {
     pub price: Uint128,
 }
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetBuyPriceResponse {
-    pub price: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetSellPriceResponse {
-    pub price: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetBuyPriceAfterFeeResponse {
-    pub price: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetSellPriceAfterFeeResponse {
-    pub price: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct GetShareBalanceResponse {
     pub amount: Uint128,
 }

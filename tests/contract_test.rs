@@ -4,8 +4,7 @@ mod tests {
     use cosmwasm_std::{coins, from_json, Addr, Uint128};
     use rust_contract::contract::{execute, instantiate, query};
     use rust_contract::msg::{
-        ExecuteMsg, GetBuyPriceAfterFeeResponse, GetBuyPriceResponse, GetPriceResponse,
-        GetShareBalanceResponse, InstantiateMsg, QueryMsg,
+        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg,
     };
     use rust_contract::state::State;
 
@@ -26,8 +25,8 @@ mod tests {
         assert_eq!(
             State {
                 owner: Addr::unchecked("creator"),
-                subject_fee_percent: Uint128::new(5),
-                protocol_fee_percent: Uint128::new(5),
+                subject_fee_percent: Uint128::new(10),
+                protocol_fee_percent: Uint128::new(10),
                 protocol_fee_destination: Addr::unchecked("creator"),
             },
             state
@@ -190,16 +189,25 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // buy shares
+        // buy first share (cant sell)
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: Uint128::new(2),
+            amount: Uint128::new(1),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(2, res.messages.len());
 
-        // sell shares
+        // buy another share (can sell)
+        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let msg = ExecuteMsg::BuyShares {
+            shares_subject: Addr::unchecked("anyone"),
+            amount: Uint128::new(1),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+
+        // sell share
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg = ExecuteMsg::SellShares {
             shares_subject: Addr::unchecked("anyone"),
@@ -222,7 +230,7 @@ mod tests {
         // );
     }
 
-    #[test]
+    //#[test]
     // fn get_price() {
     //     let mut deps = mock_dependencies();
 
@@ -261,7 +269,6 @@ mod tests {
     //     let get_buy_price_response: GetBuyPriceResponse = from_json(&res).unwrap();
     //     assert_eq!(Uint128::new(0), get_buy_price_response.price);
     // }
-
     #[test]
     fn get_share_balance() {
         let mut deps = mock_dependencies();
@@ -272,14 +279,23 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
+        // buy first share
+        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let msg = ExecuteMsg::BuyShares {
+            shares_subject: Addr::unchecked("anyone"),
+            amount: Uint128::new(1),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+
         // get share balance
         let msg = QueryMsg::GetShareBalance {
-            shares_subject: Addr::unchecked("creator"),
-            my_address: Addr::unchecked("creator"),
+            shares_subject: Addr::unchecked("anyone"),
+            my_address: Addr::unchecked("anyone"),
         };
         let res = query(deps.as_ref(), mock_env(), msg).unwrap();
         let get_share_balance_response: GetShareBalanceResponse = from_json(&res).unwrap();
-        assert_eq!(Uint128::new(0), get_share_balance_response.amount);
+        assert_eq!(Uint128::new(1), get_share_balance_response.amount);
     }
 
     // #[test]

@@ -1,6 +1,6 @@
 use crate::{
     state::{SHARES_BALANCE, SHARES_SUPPLY, STATE},
-    ContractError, msg::GetPriceResponse, util::get_price,
+    ContractError, msg::GetPriceResponse, util::{get_price, calculate_fee},
 };
 use cosmwasm_std::{
     coins, Addr, BankMsg, StdError, StdResult,
@@ -12,27 +12,33 @@ pub fn sell_shares(
     deps: DepsMut,
     info: MessageInfo,
     shares_subject: Addr,
-    amount: Uint128,
+    amount_of_shares_to_sell: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    let supply = SHARES_SUPPLY
+    let shares_supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
-    if supply > amount {
-        let price = get_price(supply, amount);
-        let protocol_fee =
-            price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
-        let subject_fee =
-            price * state.subject_fee_percent / Uint128::new(1_000_000_000_000_000_000);
+    if shares_supply > amount_of_shares_to_sell {
+        let price = get_price(shares_supply, amount_of_shares_to_sell);
+        println!("Price: {}", price);
+    
+        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
+        let subject_fee = calculate_fee(price, state.subject_fee_percent);
+        let total = price - protocol_fee - subject_fee;
+        println!("subject_fee: {}", subject_fee);
+        println!("protocol_fee: {}", protocol_fee);
+        println!("total: {}", total);
+
         let balance = SHARES_BALANCE
             .may_load(deps.storage, (&info.sender, &shares_subject))?
             .unwrap_or_default();
-        if balance >= amount {
+
+        if balance >= amount_of_shares_to_sell {
             SHARES_BALANCE.update(
                 deps.storage,
                 (&info.sender, &shares_subject),
                 |balance: Option<Uint128>| -> StdResult<_> {
-                    Ok(balance.unwrap_or_default() - amount)
+                    Ok(balance.unwrap_or_default() - amount_of_shares_to_sell)
                 },
             )?;
 
@@ -40,36 +46,23 @@ pub fn sell_shares(
                 deps.storage,
                 &shares_subject,
                 |supply: Option<Uint128>| -> StdResult<_> {
-                    Ok(supply.unwrap_or_default() - amount)
+                    Ok(supply.unwrap_or_default() - amount_of_shares_to_sell)
                 },
             )?;
 
-            let total_withdrawal = price - protocol_fee - subject_fee;
-            let funds = vec![Coin {
-                denom: "inj".to_string(),
-                amount: total_withdrawal,
-            }];
             let funds_result = BankMsg::Send {
                 to_address: info.sender.to_string(),
-                amount: funds,
+                amount: coins(total.into(), "inj"),
             };
 
-            let the_protocol_fee = vec![Coin {
-                denom: "inj".to_string(),
-                amount: protocol_fee.into(),
-            }];
             let protocol_fee_result = BankMsg::Send {
                 to_address: state.protocol_fee_destination.to_string(),
-                amount: the_protocol_fee,
+                amount: coins(protocol_fee.into(), "inj"),
             };
 
-            let the_subject_fee = vec![Coin {
-                denom: "inj".to_string(),
-                amount: subject_fee.into(),
-            }];
             let subject_fee_result = BankMsg::Send {
                 to_address: shares_subject.to_string(),
-                amount: the_subject_fee,
+                amount: coins(subject_fee.into(), "inj"),
             };
 
             let response = Response::new()
