@@ -9,7 +9,7 @@ use crate::{
     ContractError,
 };
 use cosmwasm_std::{
-    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, CosmosMsg,
+    entry_point, to_json_binary, Addr, BankMsg, Binary, Coin, Deps, StdError, StdResult, Uint128, CosmosMsg, coins,
 };
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
@@ -447,6 +447,7 @@ pub fn buy_shares(
             price * state.protocol_fee_percent / Uint128::new(1_000_000_000_000_000_000);
         let subject_fee =
             price * state.subject_fee_percent / Uint128::new(1_000_000_000_000_000_000);
+        println!("protocol_fee: {}", protocol_fee);
         assert!(
             info.funds[0].amount >= price + protocol_fee + subject_fee,
             "Insufficient payment"
@@ -463,27 +464,33 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
-        let the_protocol_fee = vec![Coin {
-            denom: "inj".to_string(),
-            amount: protocol_fee.into(),
-        }];
+        // let the_protocol_fee = vec![Coin {
+        //     denom: "inj".to_string(),
+        //     amount: protocol_fee.into(),
+        // }];
+        deps.api.debug("send protocol fee (NEW USER)");
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: the_protocol_fee,
+            amount: coins(1, "inj"),
         };
+        deps.api.debug("success");
+
         /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
             amount: the_protocol_fee,
         });*/
 
-        let the_subject_fee = vec![Coin {
-            denom: "inj".to_string(),
-            amount: subject_fee.into(),
-        }];
+        deps.api.debug("send subject fee (NEW USER)");
+        // let the_subject_fee = vec![Coin {
+        //     denom: "inj".to_string(),
+        //     amount: subject_fee.into(),
+        // }];
+        
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: the_subject_fee,
+            amount: coins(1, "inj"),
         };
+        deps.api.debug("success");
         /*let message: CosmosMsg = CosmosMsg::Bank(BankMsg::Send {
             to_address: shares_subject.to_string(),
             amount: the_subject_fee,
@@ -529,13 +536,14 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
-        let the_protocol_fee = vec![Coin {
-            denom: "inj".to_string(),
-            amount: protocol_fee.into(),
-        }];
+        // let the_protocol_fee = vec![Coin {
+        //     denom: "inj".to_string(),
+        //     amount: protocol_fee.into(),
+        // }];
+        deps.api.debug("send protocol fee ");
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: the_protocol_fee,
+            amount: coins(1, "inj"),
         };
 
         let the_subject_fee = vec![Coin {

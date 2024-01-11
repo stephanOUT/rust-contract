@@ -169,7 +169,7 @@ mod tests {
             amount: Uint128::new(2),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // sell shares
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
@@ -178,7 +178,7 @@ mod tests {
             amount: Uint128::new(1),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         let res = query(
             deps.as_ref(),

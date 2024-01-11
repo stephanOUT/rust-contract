@@ -26,7 +26,7 @@ mod inj_tests {
         let wasm = Wasm::new(&app);
 
         // Load compiled wasm bytecode
-        let wasm_byte_code = std::fs::read("./artifacts/rust_contract.wasm").unwrap();
+        let wasm_byte_code = std::fs::read("./artifacts/rust_contract-aarch64.wasm").unwrap();
         let code_id = wasm
             .store_code(&wasm_byte_code, None, admin)
             .unwrap()
@@ -56,8 +56,7 @@ mod inj_tests {
             contract_state.protocol_fee_destination
         );
 
-        // have account 2 buy a share of account 2
-
+        // have user buy a share of user
         let funds = &[Coin::new(100000000000000000, "inj")];
         let s = to_json_string(&funds).unwrap();
         println!("funds: {:?}", s);
