@@ -77,7 +77,7 @@ mod inj_tests {
                 shares_subject: Addr::unchecked(user.address()),
                 amount: Uint128::new(1),
             },
-            funds,
+            &[],
             user,
         )
         .unwrap();

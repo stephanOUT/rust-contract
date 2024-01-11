@@ -136,7 +136,7 @@ pub fn buy_shares(
 
     // user buying own shares for first time
     if shares_subject == info.sender && shares_supply.is_zero() {
-        let price_response = get_price(amount, amount)?;
+        let price_response = get_price(shares_supply, amount)?;
         let price: Uint128 = price_response.price;
         println!("Price: {}", price);
         let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
@@ -145,10 +145,7 @@ pub fn buy_shares(
         println!("subject_fee: {}", subject_fee);
         println!("protocol_fee: {}", protocol_fee);
         println!("total: {}", total);
-        assert!(
-            info.funds[0].amount >= total,
-            "Insufficient payment"
-        );
+ 
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
@@ -163,27 +160,17 @@ pub fn buy_shares(
 
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: coins(protocol_fee.into(), "inj"),
+            amount: vec![],
         };
 
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: coins(subject_fee.into(), "inj"),
+            amount: vec![],
         };
-
-        //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-        // let amount_back = Uint128::new(1000000);//info.funds[0].amount - price - protocol_fee - subject_fee;
-        // let amount_back_result = BankMsg::Send {
-        //     to_address: info.sender.to_string(),
-        //     amount: coins(amount_back.into(), "inj"),
-        // };
-
-        //}
 
         let response = Response::new()
             .add_message(protocol_fee_result)
             .add_message(subject_fee_result);
-        //    .add_message(amount_back_result);
         Ok(response)
     }
     // anyone buying shares
@@ -223,22 +210,9 @@ pub fn buy_shares(
             amount: coins(subject_fee.into(), "inj"),
         };
 
-        //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-        // let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
-        // let the_amount_back = vec![Coin {
-        //     denom: "inj".to_string(),
-        //     amount: amount_back.into(),
-        // }];
-        // let amount_back_result = BankMsg::Send {
-        //     to_address: info.sender.to_string(),
-        //     amount: the_amount_back,
-        // };
-        //}
-
         let response = Response::new()
             .add_message(protocol_fee_result)
             .add_message(subject_fee_result);
-         //   .add_message(amount_back_result);
         Ok(response)
     } else {
         Err(ContractError::Std(StdError::generic_err(
