@@ -3,7 +3,7 @@ mod inj_tests {
     use injective_std::types::cosmos::bank::v1beta1::QueryBalanceRequest;
     use injective_test_tube::{Account, Bank, InjectiveTestApp, Module, Wasm};
     use rust_contract::{
-        msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+        msg::{ExecuteMsg, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
         state::State,
     };
 
@@ -26,7 +26,7 @@ mod inj_tests {
         // it implements `Module` trait which you will see more later.
         let wasm = Wasm::new(&app);
         let bank = Bank::new(&app);
-    
+
         // Load compiled wasm bytecode
         let wasm_byte_code = std::fs::read("./artifacts/rust_contract-aarch64.wasm").unwrap();
         let code_id = wasm
@@ -64,30 +64,60 @@ mod inj_tests {
             address: user.address(),
             denom: "inj".to_string(),
         };
-   
+
         let balanceResponse = bank.query_balance(&balance_request.into()).unwrap();
-        println!("user balance before transaction: {:?}", balanceResponse.balance);
+        println!(
+            "user balance before transaction: {:?}",
+            balanceResponse.balance
+        );
 
         let funds = &[Coin::new(100000000000000000, "inj")];
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
                 shares_subject: Addr::unchecked(user.address()),
-                amount: Uint128::new(1),
+                amount: Uint128::new(8),
             },
             funds,
             user,
         )
         .unwrap();
 
-
         let balance_request = QueryBalanceRequest {
             address: user.address(),
             denom: "inj".to_string(),
         };
-   
-        let balanceResponse = bank.query_balance(&balance_request.into()).unwrap();
-        println!("user balance after transaction: {:?}", balanceResponse.balance);
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "user balance after transaction: {:?}",
+            balance_response.balance
+        );
+
+        // query shares
+        let user_shares = wasm
+            .query::<QueryMsg, GetShareBalanceResponse>(
+                &contract_addr,
+                &QueryMsg::GetShareBalance {
+                    shares_subject: Addr::unchecked(user.address()),
+                    my_address: Addr::unchecked(user.address()),
+                },
+            )
+            .unwrap();
+        println!("user shares: {:?}", user_shares.amount.u128());
+
+
+        // query admin balance (where protocol fees go)
+        let balance_request = QueryBalanceRequest {
+            address: admin.address(),
+            denom: "inj".to_string(),
+        };     
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "admin balance after transaction: {:?}",
+            balance_response.balance
+        );   
+
         // set fee destination to different address
         // wasm.execute::<ExecuteMsg>(
         //     &contract_addr,
