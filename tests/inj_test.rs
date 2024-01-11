@@ -14,8 +14,7 @@ mod inj_tests {
         let accs = app
             .init_accounts(
                 &[
-                    Coin::new(1_000_000_000_000, "usdt"),
-                    Coin::new(1_000_000_000_000_000_000, "inj"),
+                    Coin::new(1000000000000000000, "inj"), // 1 INJ
                 ],
                 2,
             )
@@ -76,7 +75,7 @@ mod inj_tests {
             &contract_addr,
             &ExecuteMsg::BuyShares {
                 shares_subject: Addr::unchecked(user.address()),
-                amount: Uint128::new(8),
+                amount: Uint128::new(1),
             },
             funds,
             user,

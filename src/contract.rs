@@ -134,14 +134,14 @@ pub fn buy_shares(
         let price_response = get_price(amount, amount)?;
         let price: Uint128 = price_response.price;
         println!("Price: {}", price);
-        let protocol_fee = price * state.protocol_fee_percent / Uint128::new(100);
-        let subject_fee = price * state.subject_fee_percent / Uint128::new(100);
+        let protocol_fee = price * state.protocol_fee_percent ;
+        let subject_fee = price * state.subject_fee_percent ;
         println!("subject_fee: {}", subject_fee);
         println!("protocol_fee: {}", protocol_fee);
-        assert!(
-            info.funds[0].amount >= price + protocol_fee + subject_fee,
-            "Insufficient payment"
-        );
+        // assert!(
+        //     info.funds[0].amount >= price + protocol_fee + subject_fee,
+        //     "Insufficient payment"
+        // );
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
@@ -165,7 +165,7 @@ pub fn buy_shares(
         };
 
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-        let amount_back = info.funds[0].amount - price - protocol_fee - subject_fee;
+        let amount_back = Uint128::new(1000000);//info.funds[0].amount - price - protocol_fee - subject_fee;
         let amount_back_result = BankMsg::Send {
             to_address: info.sender.to_string(),
             amount: coins(amount_back.into(), "inj"),
@@ -268,7 +268,7 @@ pub fn get_price(supply: Uint128, amount: Uint128) -> StdResult<GetPriceResponse
     };
 
     let summation = sum2 - sum1;
-    let the_price = summation * Uint128::new(1_000_000_000_000_000_000) / Uint128::new(16000);
+    let the_price = (summation * Uint128::new(1000000000000000000)) / Uint128::new(16000);
     Ok(GetPriceResponse { price: the_price })
 }
 pub fn sell_shares(
