@@ -134,18 +134,18 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
+    let price_response = get_price(shares_supply, amount)?;
+    let price: Uint128 = price_response.price;
+    println!("Price: {}", price);
+    let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
+    let subject_fee = calculate_fee(price, state.subject_fee_percent);
+    let total = price + protocol_fee + subject_fee;
+    println!("subject_fee: {}", subject_fee);
+    println!("protocol_fee: {}", protocol_fee);
+    println!("total: {}", total);
+
     // user buying own shares for first time
-    if shares_subject == info.sender && shares_supply.is_zero() {
-        let price_response = get_price(shares_supply, amount)?;
-        let price: Uint128 = price_response.price;
-        println!("Price: {}", price);
-        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
-        let subject_fee = calculate_fee(price, state.subject_fee_percent);
-        let total = price + protocol_fee + subject_fee;
-        println!("subject_fee: {}", subject_fee);
-        println!("protocol_fee: {}", protocol_fee);
-        println!("total: {}", total);
- 
+    if shares_subject == info.sender && shares_supply.is_zero() {        
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
@@ -175,19 +175,7 @@ pub fn buy_shares(
     }
     // anyone buying shares
     else if shares_supply > Uint128::zero() {
-        let price_response = get_price(shares_supply, amount)?;
-        let price: Uint128 = price_response.price;
-        println!("Price: {}", price);
-        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
-        let subject_fee = calculate_fee(price, state.subject_fee_percent);
-        let total = price + protocol_fee + subject_fee;
-        println!("subject_fee: {}", subject_fee);
-        println!("protocol_fee: {}", protocol_fee);
-        println!("total: {}", total);
-        assert!(
-            info.funds[0].amount >= total,
-            "Insufficient payment"
-        );
+        assert!(info.funds[0].amount >= total, "Insufficient payment");
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),

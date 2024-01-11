@@ -16,11 +16,12 @@ mod inj_tests {
                 &[
                     Coin::new(1000000000000000000, "inj"), // 1 INJ
                 ],
-                2,
+                3,
             )
             .unwrap();
         let admin = &accs[0];
         let user = &accs[1];
+        let user_2 = &accs[2];
         // `Wasm` is the module we use to interact with cosmwasm releated logic on the appchain
         // it implements `Module` trait which you will see more later.
         let wasm = Wasm::new(&app);
@@ -64,10 +65,10 @@ mod inj_tests {
             denom: "inj".to_string(),
         };
 
-        let balanceResponse = bank.query_balance(&balance_request.into()).unwrap();
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
         println!(
             "user balance before transaction: {:?}",
-            balanceResponse.balance
+            balance_response.balance
         );
 
         let funds = &[Coin::new(100000000000000000, "inj")];
@@ -77,11 +78,11 @@ mod inj_tests {
                 shares_subject: Addr::unchecked(user.address()),
                 amount: Uint128::new(1),
             },
-            &[],
+            &[], // empty funds when buying first share
             user,
         )
         .unwrap();
-        
+
         let balance_request = QueryBalanceRequest {
             address: user.address(),
             denom: "inj".to_string(),
@@ -105,17 +106,16 @@ mod inj_tests {
             .unwrap();
         println!("user shares: {:?}", user_shares.amount.u128());
 
-
         // query admin balance (where protocol fees go)
         let balance_request = QueryBalanceRequest {
             address: admin.address(),
             denom: "inj".to_string(),
-        };     
+        };
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
         println!(
             "admin balance after transaction: {:?}",
             balance_response.balance
-        );   
+        );
 
         // set fee destination to different address
         // wasm.execute::<ExecuteMsg>(
@@ -127,5 +127,110 @@ mod inj_tests {
         //     &accs[0],
         // )
         // .unwrap();
+    }
+
+    #[test]
+    fn buy_share_of_other_user() {
+        // init
+        let app = InjectiveTestApp::new();
+        let accs = app
+            .init_accounts(
+                &[
+                    Coin::new(1000000000000000000, "inj"), // 1 INJ
+                ],
+                3,
+            )
+            .unwrap();
+        let admin = &accs[0];
+        let user = &accs[1];
+        let user_2 = &accs[2];
+        let wasm = Wasm::new(&app);
+        let bank = Bank::new(&app);
+        let wasm_byte_code = std::fs::read("./artifacts/rust_contract-aarch64.wasm").unwrap();
+        let code_id = wasm
+            .store_code(&wasm_byte_code, None, admin)
+            .unwrap()
+            .data
+            .code_id;
+
+        let contract_addr = wasm
+            .instantiate(
+                code_id,
+                &InstantiateMsg {},
+                None,  // contract admin used for migration, not the same as cw1_whitelist admin
+                None,  // contract label
+                &[],   // funds
+                admin, // signer
+            )
+            .unwrap()
+            .data
+            .address;
+        println!("user 1: buying initial share");
+        let balance_request = QueryBalanceRequest {
+            address: user.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "user 1: query_balance: {:?}",
+            balance_response.balance
+        );
+
+        wasm.execute::<ExecuteMsg>(
+            &contract_addr,
+            &ExecuteMsg::BuyShares {
+                shares_subject: Addr::unchecked(user.address()),
+                amount: Uint128::new(1),
+            },
+            &[], // empty funds when buying first share
+            user,
+        )
+        .unwrap();
+
+        let balance_request = QueryBalanceRequest {
+            address: user.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "user 1: query_balance: {:?}",
+            balance_response.balance
+        );
+
+        println!("user 2: buying initial share");
+        let balance_request = QueryBalanceRequest {
+            address: user_2.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "user 2: query_balance: {:?}",
+            balance_response.balance
+        );
+
+        wasm.execute::<ExecuteMsg>(
+            &contract_addr,
+            &ExecuteMsg::BuyShares {
+                shares_subject: Addr::unchecked(user_2.address()),
+                amount: Uint128::new(1),
+            },
+            &[], // empty funds when buying first share
+            user_2,
+        )
+        .unwrap();
+
+        let balance_request = QueryBalanceRequest {
+            address: user_2.address(),
+            denom: "inj".to_string(),
+        };
+
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        println!(
+            "user 2: query_balance: {:?}",
+            balance_response.balance
+        );
     }
 }
