@@ -165,18 +165,18 @@ pub fn buy_shares(
         };
 
         //if info.funds[0].amount > (price + protocol_fee + subject_fee) {
-        let amount_back = Uint128::new(1000000);//info.funds[0].amount - price - protocol_fee - subject_fee;
-        let amount_back_result = BankMsg::Send {
-            to_address: info.sender.to_string(),
-            amount: coins(amount_back.into(), "inj"),
-        };
+        // let amount_back = Uint128::new(1000000);//info.funds[0].amount - price - protocol_fee - subject_fee;
+        // let amount_back_result = BankMsg::Send {
+        //     to_address: info.sender.to_string(),
+        //     amount: coins(amount_back.into(), "inj"),
+        // };
 
         //}
 
         let response = Response::new()
             .add_message(protocol_fee_result)
-            .add_message(subject_fee_result)
-            .add_message(amount_back_result);
+            .add_message(subject_fee_result);
+        //    .add_message(amount_back_result);
         Ok(response)
     }
     // anyone buying shares

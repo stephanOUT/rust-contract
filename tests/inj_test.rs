@@ -81,7 +81,7 @@ mod inj_tests {
             user,
         )
         .unwrap();
-
+        
         let balance_request = QueryBalanceRequest {
             address: user.address(),
             denom: "inj".to_string(),

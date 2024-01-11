@@ -132,7 +132,7 @@ mod tests {
             amount: shares_to_buy,
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // check how much user gets back
         println!("{:?}", res.messages);
@@ -169,7 +169,7 @@ mod tests {
             amount: Uint128::new(2),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // sell shares
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
