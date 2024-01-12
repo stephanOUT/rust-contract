@@ -25,9 +25,11 @@ mod tests {
         assert_eq!(
             State {
                 owner: Addr::unchecked("creator"),
-                subject_fee_percent: Uint128::new(10),
-                protocol_fee_percent: Uint128::new(10),
+                subject_fee_percent: Uint128::new(500),
+                protocol_fee_percent: Uint128::new(500),
                 protocol_fee_destination: Addr::unchecked("creator"),
+                trading_is_enabled: true,
+                buy_sell_quantity_limit: Uint128::new(20),
             },
             state
         );
@@ -172,7 +174,7 @@ mod tests {
         let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
-            amount: Uint128::new(1),
+            amount: Uint128::new(10),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(2, res.messages.len());

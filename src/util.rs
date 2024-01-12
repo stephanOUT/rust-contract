@@ -1,7 +1,7 @@
 use cosmwasm_std::Uint128;
 
 pub fn calculate_fee(price: Uint128, fee_percent: Uint128) -> Uint128 {
-    return price * fee_percent / Uint128::new(100);
+    return price * fee_percent / Uint128::new(100000);
 }
 
 pub fn get_price(supply: Uint128, amount: Uint128) -> Uint128 {

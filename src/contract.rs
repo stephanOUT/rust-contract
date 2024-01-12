@@ -28,8 +28,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_fee_percent: Uint128::new(10),
-        protocol_fee_percent: Uint128::new(10), // 10 makes it easy to test
+        subject_fee_percent: Uint128::new(5000), // 5.000%
+        protocol_fee_percent: Uint128::new(5000), // 5.000%
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
         buy_sell_quantity_limit: Uint128::new(20),
@@ -41,8 +41,8 @@ pub fn instantiate(
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
-        .add_attribute("subject_fee_percent", Uint128::new(10))
-        .add_attribute("protocol_fee_percent", Uint128::new(10)))
+        .add_attribute("subject_fee_percent", Uint128::new(5))
+        .add_attribute("protocol_fee_percent", Uint128::new(5)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
