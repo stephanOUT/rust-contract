@@ -1,4 +1,3 @@
-use crate::user::query::get_share_balance;
 #[cfg(not(feature = "library"))]
 use crate::{
     msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
@@ -7,6 +6,10 @@ use crate::{
     user::execute::{buy_shares, sell_shares},
     user::query::get_price_query,
     ContractError,
+};
+use crate::{
+    owner::execute::{set_buy_sell_quantity_limit, toggle_trading},
+    user::query::get_share_balance,
 };
 use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
@@ -28,6 +31,8 @@ pub fn instantiate(
         subject_fee_percent: Uint128::new(10),
         protocol_fee_percent: Uint128::new(10), // 10 makes it easy to test
         protocol_fee_destination: info.sender.clone(), // change later
+        trading_is_enabled: true,
+        buy_sell_quantity_limit: Uint128::new(20),
     };
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -65,6 +70,10 @@ pub fn execute(
             shares_subject,
             amount,
         } => sell_shares(deps, info, shares_subject, amount),
+        ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled),
+        ExecuteMsg::SetBuySellQuantityLimit { limit } => {
+            set_buy_sell_quantity_limit(deps, info, limit)
+        }
     }
 }
 

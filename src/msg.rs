@@ -14,6 +14,8 @@ pub enum ExecuteMsg {
     SetSubjectFeePercent { subject_fee_percent: Uint128 },
     BuyShares { shares_subject: Addr, amount: Uint128 },
     SellShares { shares_subject: Addr, amount: Uint128 },
+    ToggleTrading { is_enabled: bool },
+    SetBuySellQuantityLimit { limit: Uint128 },
 }
 
 #[cw_serde]
