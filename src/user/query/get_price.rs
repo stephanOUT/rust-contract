@@ -11,31 +11,34 @@ pub fn get_price_query(
     shares_subject: Addr,
     amount: Uint128,
     with_fees: bool,
-    is_buy: bool
+    is_buy: bool,
 ) -> StdResult<GetPriceResponse> {
     let state = STATE.load(deps.storage)?;
     let supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
-    let mut price = get_price(supply, amount);
-    if !is_buy {
-        price = get_price((supply - amount), amount);
-    }
+    // Calculate the price without considering fees
+    let base_price = get_price(if is_buy { supply } else { supply - amount }, amount);
 
-    if with_fees {
-        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
-        let subject_fee = calculate_fee(price, state.subject_fee_percent);
-        let mut price_with_fees = price + protocol_fee + subject_fee;
-        if !is_buy {
-            price_with_fees = price - protocol_fee - subject_fee;
-        }
-        Ok(GetPriceResponse {
-            price: price_with_fees,
-        })
+    // Calculate fees if needed
+    let (protocol_fee, subject_fee) = if with_fees {
+        (
+            calculate_fee(base_price, state.protocol_fee_percent),
+            calculate_fee(base_price, state.subject_fee_percent),
+        )
     } else {
-        Ok(GetPriceResponse { price })
-    }
+        (Uint128::zero(), Uint128::zero())
+    };
 
-    // IT SEEMS THE MUT STATE ERRORS ON FEEDBACK CALLING THE FUNCTION
+    // Adjust the price based on whether it's a buy or sell
+    let price_with_fees = if is_buy {
+        base_price + protocol_fee + subject_fee
+    } else {
+        base_price - protocol_fee - subject_fee
+    };
+
+    Ok(GetPriceResponse {
+        price: price_with_fees,
+    })
 }
