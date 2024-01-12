@@ -25,8 +25,8 @@ mod tests {
         assert_eq!(
             State {
                 owner: Addr::unchecked("creator"),
-                subject_fee_percent: Uint128::new(500),
-                protocol_fee_percent: Uint128::new(500),
+                subject_fee_percent: Uint128::new(5000),
+                protocol_fee_percent: Uint128::new(5000),
                 protocol_fee_destination: Addr::unchecked("creator"),
                 trading_is_enabled: true,
                 buy_sell_quantity_limit: Uint128::new(20),

@@ -19,4 +19,10 @@ pub enum ContractError {
     
     #[error("Serialization")]
     SerializationError,
+
+    #[error("Trading is disabled")]
+    TradingIsDisabled {},
+
+    #[error("Buy/Sell quantity limit exceeded")]
+    BuySellQuantityLimitExceeded {},
 }

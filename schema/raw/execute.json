@@ -114,6 +114,48 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "toggle_trading"
+      ],
+      "properties": {
+        "toggle_trading": {
+          "type": "object",
+          "required": [
+            "is_enabled"
+          ],
+          "properties": {
+            "is_enabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_buy_sell_quantity_limit"
+      ],
+      "properties": {
+        "set_buy_sell_quantity_limit": {
+          "type": "object",
+          "required": [
+            "limit"
+          ],
+          "properties": {
+            "limit": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

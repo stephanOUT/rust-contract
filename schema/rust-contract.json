@@ -124,6 +124,48 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "toggle_trading"
+        ],
+        "properties": {
+          "toggle_trading": {
+            "type": "object",
+            "required": [
+              "is_enabled"
+            ],
+            "properties": {
+              "is_enabled": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "set_buy_sell_quantity_limit"
+        ],
+        "properties": {
+          "set_buy_sell_quantity_limit": {
+            "type": "object",
+            "required": [
+              "limit"
+            ],
+            "properties": {
+              "limit": {
+                "$ref": "#/definitions/Uint128"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -268,12 +310,17 @@
       "title": "State",
       "type": "object",
       "required": [
+        "buy_sell_quantity_limit",
         "owner",
         "protocol_fee_destination",
         "protocol_fee_percent",
-        "subject_fee_percent"
+        "subject_fee_percent",
+        "trading_is_enabled"
       ],
       "properties": {
+        "buy_sell_quantity_limit": {
+          "$ref": "#/definitions/Uint128"
+        },
         "owner": {
           "$ref": "#/definitions/Addr"
         },
@@ -285,6 +332,9 @@
         },
         "subject_fee_percent": {
           "$ref": "#/definitions/Uint128"
+        },
+        "trading_is_enabled": {
+          "type": "boolean"
         }
       },
       "definitions": {

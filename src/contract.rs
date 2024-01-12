@@ -28,7 +28,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_fee_percent: Uint128::new(5000), // 5.000%
+        subject_fee_percent: Uint128::new(5000),  // 5.000%
         protocol_fee_percent: Uint128::new(5000), // 5.000%
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
@@ -41,8 +41,8 @@ pub fn instantiate(
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
-        .add_attribute("subject_fee_percent", Uint128::new(5))
-        .add_attribute("protocol_fee_percent", Uint128::new(5)))
+        .add_attribute("subject_fee_percent", Uint128::new(5000))
+        .add_attribute("protocol_fee_percent", Uint128::new(5000)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -52,6 +52,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let state: State = STATE.load(deps.storage)?;
     match msg {
         ExecuteMsg::SetFeeDestination { fee_destination } => {
             set_fee_destination(deps, info, fee_destination)
@@ -65,11 +66,27 @@ pub fn execute(
         ExecuteMsg::BuyShares {
             shares_subject,
             amount,
-        } => buy_shares(deps, info, shares_subject, amount),
+        } => {
+            if state.trading_is_enabled == false {
+                return Err(ContractError::TradingIsDisabled {});
+            }
+            if amount > state.buy_sell_quantity_limit {
+                return Err(ContractError::BuySellQuantityLimitExceeded {});
+            }
+            buy_shares(deps, info, shares_subject, amount)
+        }
         ExecuteMsg::SellShares {
             shares_subject,
             amount,
-        } => sell_shares(deps, info, shares_subject, amount),
+        } => {
+            if state.trading_is_enabled == false {
+                return Err(ContractError::TradingIsDisabled {});
+            }
+            if amount > state.buy_sell_quantity_limit {
+                return Err(ContractError::BuySellQuantityLimitExceeded {});
+            }
+            sell_shares(deps, info, shares_subject, amount)
+        }
         ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled),
         ExecuteMsg::SetBuySellQuantityLimit { limit } => {
             set_buy_sell_quantity_limit(deps, info, limit)

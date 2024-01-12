@@ -5,7 +5,6 @@ pub fn calculate_fee(price: Uint128, fee_percent: Uint128) -> Uint128 {
 }
 
 pub fn get_price(supply: Uint128, amount: Uint128) -> Uint128 {
-    println!("get_price: supply: {}, amount: {}", supply, amount);
     let sum1 = if supply.is_zero() {
         Uint128::zero()
     } else {
