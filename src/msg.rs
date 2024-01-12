@@ -22,7 +22,7 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(GetPriceResponse)]
-    GetPrice { shares_subject: Addr, amount: Uint128, with_fees: bool },
+    GetPrice { shares_subject: Addr, amount: Uint128, with_fees: bool, is_buy: bool },
     #[returns(GetShareBalanceResponse)]
     GetShareBalance { shares_subject: Addr, my_address: Addr },
     #[returns(State)]

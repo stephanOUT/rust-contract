@@ -19,7 +19,7 @@ pub fn sell_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
     if shares_supply > amount_of_shares_to_sell {
-        let price = get_price(shares_supply, amount_of_shares_to_sell);
+        let price = get_price((shares_supply - amount_of_shares_to_sell), amount_of_shares_to_sell);
         println!("Price: {}", price);
     
         let protocol_fee = calculate_fee(price, state.protocol_fee_percent);

@@ -101,11 +101,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             shares_subject,
             amount,
             with_fees,
+            is_buy,
         } => to_json_binary::<GetPriceResponse>(&get_price_query(
             deps,
             shares_subject,
             amount,
             with_fees,
+            is_buy,
         )?),
         QueryMsg::GetShareBalance {
             shares_subject,

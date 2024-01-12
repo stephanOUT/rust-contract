@@ -25,4 +25,7 @@ pub enum ContractError {
 
     #[error("Buy/Sell quantity limit exceeded")]
     BuySellQuantityLimitExceeded {},
+
+    #[error("Insufficient payment")]
+    InsufficientPayment {},
 }
