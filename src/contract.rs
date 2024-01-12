@@ -9,7 +9,7 @@ use crate::{
 };
 use crate::{
     owner::execute::{set_buy_sell_quantity_limit, toggle_trading},
-    user::query::get_share_balance,
+    user::query::{get_share_balance, get_state},
 };
 use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
@@ -117,12 +117,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             shares_subject,
             my_address,
         )?),
-        QueryMsg::GetState {} => {
-            println!("Query: GetState");
-            let state: State = STATE.load(deps.storage)?;
-            // let state = get_deserialized_state(&deps)?;
-            println!("Query Result: {:?}", state);
-            to_json_binary::<State>(&state)
-        }
+        QueryMsg::GetState {} => to_json_binary(&get_state(deps)?),
     }
 }

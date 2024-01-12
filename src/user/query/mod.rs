@@ -3,3 +3,6 @@ pub use get_price::get_price_query;
 
 mod get_share_balance;
 pub use get_share_balance::get_share_balance;
+
+mod get_state;
+pub use get_state::get_state;
