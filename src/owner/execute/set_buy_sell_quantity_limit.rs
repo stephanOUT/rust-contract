@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, MessageInfo, Response, Uint128};
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128};
 
 use crate::{state::STATE, ContractError};
 
@@ -14,5 +14,6 @@ pub fn set_buy_sell_quantity_limit(
         state.buy_sell_quantity_limit = limit;
         Ok(state)
     })?;
-    Ok(Response::new().add_attribute("method", "toggle_trading"))
+    Ok(Response::new()
+        .add_event(Event::new("set_buy_sell_quantity_limit").add_attribute("limit", limit)))
 }

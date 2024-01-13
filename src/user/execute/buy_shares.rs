@@ -1,12 +1,9 @@
 use crate::{
     state::{SHARES_BALANCE, SHARES_SUPPLY, STATE},
-    ContractError,
     util::{calculate_fee, get_price},
+    ContractError,
 };
-use cosmwasm_std::{
-    coins, Addr, BankMsg, StdError, StdResult,
-    Uint128,
-};
+use cosmwasm_std::{coins, Addr, BankMsg, Event, StdError, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 pub fn buy_shares(
@@ -19,6 +16,10 @@ pub fn buy_shares(
 
     let shares_supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+
+    let shares_balance = SHARES_BALANCE
+        .may_load(deps.storage, (&info.sender, &shares_subject))?
         .unwrap_or_default();
 
     let price = get_price(shares_supply, amount);
@@ -56,6 +57,15 @@ pub fn buy_shares(
         };
 
         let response = Response::new()
+            .add_event(
+                Event::new("buy_shares")
+                    .add_attribute("sender", info.sender)
+                    .add_attribute("shares_subject", shares_subject)
+                    .add_attribute("amount", amount)
+                    .add_attribute("shares_balance", shares_balance)
+                    .add_attribute("shares_supply", shares_supply)
+                    .add_attribute("total", total),
+            )
             .add_message(protocol_fee_result)
             .add_message(subject_fee_result);
         Ok(response)
@@ -86,6 +96,16 @@ pub fn buy_shares(
         };
 
         let response = Response::new()
+            .add_event(
+                Event::new("buy_shares")
+                    .add_attribute("sender", info.sender)
+                    .add_attribute("shares_subject", shares_subject)
+                    .add_attribute("amount", amount)
+                    .add_attribute("shares_balance", shares_balance)
+                    .add_attribute("shares_supply", shares_supply)
+                    .add_attribute("total", total)
+                    .add_attribute("funds", info.funds[0].amount),
+            )
             .add_message(protocol_fee_result)
             .add_message(subject_fee_result);
         Ok(response)

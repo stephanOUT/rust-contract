@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response};
 
 use crate::{state::STATE, ContractError};
 
@@ -14,5 +14,7 @@ pub fn toggle_trading(
         state.trading_is_enabled = is_enabled;
         Ok(state)
     })?;
-    Ok(Response::new().add_attribute("method", "toggle_trading"))
+    Ok(Response::new().add_event(
+        Event::new("toggle_trading").add_attribute("is_enabled", is_enabled.to_string()),
+    ))
 }

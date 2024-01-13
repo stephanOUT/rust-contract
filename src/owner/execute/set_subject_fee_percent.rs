@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, MessageInfo, Response, Uint128};
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128};
 
 use crate::{state::STATE, ContractError};
 
@@ -14,5 +14,6 @@ pub fn set_subject_fee_percent(
         state.subject_fee_percent = fee_percent;
         Ok(state)
     })?;
-    Ok(Response::new().add_attribute("method", "set_subject_fee_percent"))
+    Ok(Response::new()
+        .add_event(Event::new("set_subject_fee_percent").add_attribute("fee_percent", fee_percent)))
 }

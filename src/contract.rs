@@ -11,7 +11,7 @@ use crate::{
     owner::execute::{set_buy_sell_quantity_limit, toggle_trading},
     user::query::{get_share_balance, get_state},
 };
-use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, StdResult, Uint128};
+use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, Event, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 
@@ -39,6 +39,7 @@ pub fn instantiate(
     STATE.save(deps.storage, &state)?;
 
     Ok(Response::new()
+        .add_event(Event::new("contract_instantiated"))
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
         .add_attribute("subject_fee_percent", Uint128::new(5000))

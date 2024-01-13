@@ -1,11 +1,10 @@
 use crate::{
+    msg::GetPriceResponse,
     state::{SHARES_BALANCE, SHARES_SUPPLY, STATE},
-    ContractError, msg::GetPriceResponse, util::{get_price, calculate_fee},
+    util::{calculate_fee, get_price},
+    ContractError,
 };
-use cosmwasm_std::{
-    coins, Addr, BankMsg, StdError, StdResult,
-    Uint128, Coin,
-};
+use cosmwasm_std::{coins, Addr, BankMsg, Coin, Event, StdError, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 pub fn sell_shares(
@@ -18,10 +17,16 @@ pub fn sell_shares(
     let shares_supply = SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
+    let shares_balance = SHARES_BALANCE
+        .may_load(deps.storage, (&info.sender, &shares_subject))?
+        .unwrap_or_default();
     if shares_supply > amount_of_shares_to_sell {
-        let price = get_price((shares_supply - amount_of_shares_to_sell), amount_of_shares_to_sell);
+        let price = get_price(
+            (shares_supply - amount_of_shares_to_sell),
+            amount_of_shares_to_sell,
+        );
         println!("Price: {}", price);
-    
+
         let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
         let subject_fee = calculate_fee(price, state.subject_fee_percent);
         let total = price - protocol_fee - subject_fee;
@@ -65,10 +70,23 @@ pub fn sell_shares(
                 amount: coins(subject_fee.into(), "inj"),
             };
 
+            // let response = Response::new()
+            //     .add_message(protocol_fee_result)
+            //     .add_message(subject_fee_result)
+            //     .add_message(funds_result);
+
             let response = Response::new()
-                .add_message(protocol_fee_result)
-                .add_message(subject_fee_result)
-                .add_message(funds_result);
+                .add_event(
+                    Event::new("sell_shares")
+                        .add_attribute("sender", info.sender)
+                        .add_attribute("shares_subject", shares_subject)
+                        .add_attribute("amount", amount_of_shares_to_sell)
+                        .add_attribute("shares_balance", shares_balance)
+                        .add_attribute("shares_supply", shares_supply)
+                        .add_attribute("total", total),
+                )
+                .add_messages([funds_result, protocol_fee_result, subject_fee_result]);
+
             Ok(response)
         } else {
             Err(ContractError::Std(StdError::generic_err(
