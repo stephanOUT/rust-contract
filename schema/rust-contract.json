@@ -193,12 +193,16 @@
             "type": "object",
             "required": [
               "amount",
+              "is_buy",
               "shares_subject",
               "with_fees"
             ],
             "properties": {
               "amount": {
                 "$ref": "#/definitions/Uint128"
+              },
+              "is_buy": {
+                "type": "boolean"
               },
               "shares_subject": {
                 "$ref": "#/definitions/Addr"
