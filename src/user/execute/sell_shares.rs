@@ -11,7 +11,6 @@ pub fn sell_shares(
     deps: DepsMut,
     info: MessageInfo,
     shares_subject: Addr,
-    amount_of_shares_to_sell: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
     let shares_supply = SHARES_SUPPLY
@@ -20,10 +19,10 @@ pub fn sell_shares(
     let shares_balance = SHARES_BALANCE
         .may_load(deps.storage, (&info.sender, &shares_subject))?
         .unwrap_or_default();
-    if shares_supply > amount_of_shares_to_sell {
+    if shares_supply > Uint128::new(1) {
         let price = get_price(
-            (shares_supply - amount_of_shares_to_sell),
-            amount_of_shares_to_sell,
+            (shares_supply - Uint128::new(1)),
+            Uint128::new(1),
         );
         println!("Price: {}", price);
 
@@ -38,12 +37,12 @@ pub fn sell_shares(
             .may_load(deps.storage, (&info.sender, &shares_subject))?
             .unwrap_or_default();
 
-        if balance >= amount_of_shares_to_sell {
+        if balance >= Uint128::new(1) {
             SHARES_BALANCE.update(
                 deps.storage,
                 (&info.sender, &shares_subject),
                 |balance: Option<Uint128>| -> StdResult<_> {
-                    Ok(balance.unwrap_or_default() - amount_of_shares_to_sell)
+                    Ok(balance.unwrap_or_default() - Uint128::new(1))
                 },
             )?;
 
@@ -51,11 +50,11 @@ pub fn sell_shares(
                 deps.storage,
                 &shares_subject,
                 |supply: Option<Uint128>| -> StdResult<_> {
-                    Ok(supply.unwrap_or_default() - amount_of_shares_to_sell)
+                    Ok(supply.unwrap_or_default() - Uint128::new(1))
                 },
             )?;
 
-            if balance == amount_of_shares_to_sell {
+            if balance == Uint128::new(1) {
                 SHARES_HOLDERS.update(
                     deps.storage,
                     &shares_subject,
@@ -83,7 +82,7 @@ pub fn sell_shares(
                     Event::new("sell_shares")
                         .add_attribute("sender", info.sender)
                         .add_attribute("shares_subject", shares_subject)
-                        .add_attribute("amount", amount_of_shares_to_sell)
+                        .add_attribute("amount", Uint128::new(1))
                         .add_attribute("shares_balance", shares_balance)
                         .add_attribute("shares_supply", shares_supply)
                         .add_attribute("total", total),

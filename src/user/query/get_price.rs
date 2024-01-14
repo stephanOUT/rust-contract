@@ -9,7 +9,6 @@ use crate::{
 pub fn get_price_query(
     deps: Deps,
     shares_subject: Addr,
-    amount: Uint128,
     with_fees: bool,
     is_buy: bool,
 ) -> StdResult<GetPriceResponse> {
@@ -19,7 +18,7 @@ pub fn get_price_query(
         .unwrap_or_default();
 
     // Calculate the price without considering fees
-    let base_price = get_price(if is_buy { supply } else { supply - amount }, amount);
+    let base_price = get_price(if is_buy { supply } else { supply - Uint128::new(1) }, Uint128::new(1));
 
     // Calculate fees if needed
     let (protocol_fee, subject_fee) = if with_fees {

@@ -8,7 +8,7 @@ use crate::{
     ContractError,
 };
 use crate::{
-    owner::execute::{set_buy_sell_quantity_limit, toggle_trading},
+    owner::execute::{ toggle_trading },
     user::query::{get_share_balance, get_state, get_subject_holders},
 };
 use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, Event, StdResult, Uint128};
@@ -32,7 +32,6 @@ pub fn instantiate(
         protocol_fee_percent: Uint128::new(5000), // 5.000%
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
-        buy_sell_quantity_limit: Uint128::new(20),
     };
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -66,32 +65,21 @@ pub fn execute(
         } => set_subject_fee_percent(deps, info, subject_fee_percent),
         ExecuteMsg::BuyShares {
             shares_subject,
-            amount,
         } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
-            if amount > state.buy_sell_quantity_limit {
-                return Err(ContractError::BuySellQuantityLimitExceeded {});
-            }
-            buy_shares(deps, info, shares_subject, amount)
+            buy_shares(deps, info, shares_subject)
         }
         ExecuteMsg::SellShares {
             shares_subject,
-            amount,
         } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
-            if amount > state.buy_sell_quantity_limit {
-                return Err(ContractError::BuySellQuantityLimitExceeded {});
-            }
-            sell_shares(deps, info, shares_subject, amount)
+            sell_shares(deps, info, shares_subject)
         }
-        ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled),
-        ExecuteMsg::SetBuySellQuantityLimit { limit } => {
-            set_buy_sell_quantity_limit(deps, info, limit)
-        }
+        ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled)
     }
 }
 
@@ -100,13 +88,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetPrice {
             shares_subject,
-            amount,
             with_fees,
             is_buy,
         } => to_json_binary::<GetPriceResponse>(&get_price_query(
             deps,
             shares_subject,
-            amount,
             with_fees,
             is_buy,
         )?),

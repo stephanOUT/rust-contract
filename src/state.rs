@@ -10,7 +10,6 @@ pub struct State {
     pub protocol_fee_percent: Uint128,
     pub protocol_fee_destination: Addr,
     pub trading_is_enabled: bool,
-    pub buy_sell_quantity_limit: Uint128,
 }
 
 pub const STATE: Item<State> = Item::new("state");

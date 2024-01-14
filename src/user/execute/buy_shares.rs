@@ -10,7 +10,6 @@ pub fn buy_shares(
     deps: DepsMut,
     info: MessageInfo,
     shares_subject: Addr,
-    amount: Uint128,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
 
@@ -26,7 +25,7 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
-    let price = get_price(shares_supply, amount);
+    let price = get_price(shares_supply, Uint128::new(1));
     println!("Price: {}", price);
 
     let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
@@ -38,13 +37,13 @@ pub fn buy_shares(
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
-            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
+            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + Uint128::new(1)) },
         )?;
 
         SHARES_SUPPLY.update(
             deps.storage,
             &shares_subject,
-            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
+            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + Uint128::new(1)) },
         )?;
 
         SHARES_HOLDERS.update(
@@ -63,16 +62,16 @@ pub fn buy_shares(
             amount: vec![],
         };
 
-        let shares_balance_new = shares_balance + amount;
+        let shares_balance_new = shares_balance + Uint128::new(1);
 
         let response = Response::new()
             .add_event(
                 Event::new("buy_shares")
                     .add_attribute("sender", info.sender)
                     .add_attribute("shares_subject", shares_subject)
-                    .add_attribute("amount", amount)
+                    .add_attribute("amount", Uint128::new(1))
                     .add_attribute("shares_balance_new", shares_balance_new)
-                    .add_attribute("shares_supply_new", (shares_supply + amount))
+                    .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
                     .add_attribute("total", total),
             )
             .add_message(protocol_fee_result)
@@ -85,13 +84,13 @@ pub fn buy_shares(
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
-            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
+            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + Uint128::new(1)) },
         )?;
 
         SHARES_SUPPLY.update(
             deps.storage,
             &shares_subject,
-            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
+            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + Uint128::new(1)) },
         )?;
 
         // If is first buy, add as a holder
@@ -119,16 +118,16 @@ pub fn buy_shares(
             amount: coins(return_payment.into(), "inj"),
         };
 
-        let shares_balance_new = shares_balance + amount;
+        let shares_balance_new = shares_balance + Uint128::new(1);
 
         let response = Response::new()
             .add_event(
                 Event::new("buy_shares")
                     .add_attribute("sender", info.sender)
                     .add_attribute("shares_subject", shares_subject)
-                    .add_attribute("amount", amount)
+                    .add_attribute("amount", Uint128::new(1))
                     .add_attribute("shares_balance_new", shares_balance_new)
-                    .add_attribute("shares_supply_new", (shares_supply + amount))
+                    .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
                     .add_attribute("total", total)
                     .add_attribute("funds", info.funds[0].amount),
             )
