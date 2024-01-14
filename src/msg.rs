@@ -27,6 +27,8 @@ pub enum QueryMsg {
     GetShareBalance { shares_subject: Addr, my_address: Addr },
     #[returns(State)]
     GetState { },
+    #[returns(GetSubjectHoldersResponse)]
+    GetSubjectHolders { shares_subject: Addr },
 }
 
 #[cw_serde]
@@ -35,5 +37,9 @@ pub struct GetPriceResponse {
 }
 #[cw_serde]
 pub struct GetShareBalanceResponse {
+    pub amount: Uint128,
+}
+#[cw_serde]
+pub struct GetSubjectHoldersResponse {
     pub amount: Uint128,
 }

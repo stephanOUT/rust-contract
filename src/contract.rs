@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use crate::{
-    msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
+    msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg, GetSubjectHoldersResponse},
     owner::execute::{set_fee_destination, set_protocol_fee_percent, set_subject_fee_percent},
     state::{State, STATE},
     user::execute::{buy_shares, sell_shares},
@@ -9,7 +9,7 @@ use crate::{
 };
 use crate::{
     owner::execute::{set_buy_sell_quantity_limit, toggle_trading},
-    user::query::{get_share_balance, get_state},
+    user::query::{get_share_balance, get_state, get_subject_holders},
 };
 use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, Event, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
@@ -119,5 +119,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             my_address,
         )?),
         QueryMsg::GetState {} => to_json_binary(&get_state(deps)?),
+        QueryMsg::GetSubjectHolders {
+            shares_subject,
+        } => to_json_binary::<GetSubjectHoldersResponse>(&get_subject_holders(
+            deps,
+            shares_subject,
+        )?),
     }
 }

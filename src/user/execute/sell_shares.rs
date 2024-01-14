@@ -1,6 +1,6 @@
 use crate::{
     msg::GetPriceResponse,
-    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE},
+    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE, SHARES_HOLDERS},
     util::{calculate_fee, get_price},
     ContractError,
 };
@@ -55,6 +55,14 @@ pub fn sell_shares(
                 },
             )?;
 
+            if balance == amount_of_shares_to_sell {
+                SHARES_HOLDERS.update(
+                    deps.storage,
+                    &shares_subject,
+                    |holders: Option<Uint128>| -> StdResult<_> { Ok(holders.unwrap_or_default() - Uint128::new(1)) },
+                )?;
+            }
+
             let funds_result = BankMsg::Send {
                 to_address: info.sender.to_string(),
                 amount: coins(total.into(), "inj"),
@@ -69,11 +77,6 @@ pub fn sell_shares(
                 to_address: shares_subject.to_string(),
                 amount: coins(subject_fee.into(), "inj"),
             };
-
-            // let response = Response::new()
-            //     .add_message(protocol_fee_result)
-            //     .add_message(subject_fee_result)
-            //     .add_message(funds_result);
 
             let response = Response::new()
                 .add_event(

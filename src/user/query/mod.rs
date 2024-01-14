@@ -6,3 +6,6 @@ pub use get_share_balance::get_share_balance;
 
 mod get_state;
 pub use get_state::get_state;
+
+mod get_subject_holders;
+pub use get_subject_holders::get_subject_holders;

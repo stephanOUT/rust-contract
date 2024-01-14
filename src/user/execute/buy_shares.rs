@@ -1,5 +1,5 @@
 use crate::{
-    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE},
+    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE, SHARES_HOLDERS},
     util::{calculate_fee, get_price},
     ContractError,
 };
@@ -22,15 +22,16 @@ pub fn buy_shares(
         .may_load(deps.storage, (&info.sender, &shares_subject))?
         .unwrap_or_default();
 
+    let shares_holders = SHARES_HOLDERS
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+
     let price = get_price(shares_supply, amount);
     println!("Price: {}", price);
 
     let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
     let subject_fee = calculate_fee(price, state.subject_fee_percent);
     let total = price + protocol_fee + subject_fee;
-    println!("subject_fee: {}", subject_fee);
-    println!("protocol_fee: {}", protocol_fee);
-    println!("total: {}", total);
 
     // user buying own shares for first time
     if shares_subject == info.sender && shares_supply.is_zero() {
@@ -46,6 +47,12 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
+        SHARES_HOLDERS.update(
+            deps.storage,
+            &shares_subject,
+            |holders: Option<Uint128>| -> StdResult<_> { Ok(Uint128::new(1)) },
+        )?;
+
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
             amount: vec![],
@@ -56,14 +63,16 @@ pub fn buy_shares(
             amount: vec![],
         };
 
+        let shares_balance_new = shares_balance + amount;
+
         let response = Response::new()
             .add_event(
                 Event::new("buy_shares")
                     .add_attribute("sender", info.sender)
                     .add_attribute("shares_subject", shares_subject)
                     .add_attribute("amount", amount)
-                    .add_attribute("shares_balance", shares_balance)
-                    .add_attribute("shares_supply", shares_supply)
+                    .add_attribute("shares_balance_new", shares_balance_new)
+                    .add_attribute("shares_supply_new", (shares_supply + amount))
                     .add_attribute("total", total),
             )
             .add_message(protocol_fee_result)
@@ -85,6 +94,15 @@ pub fn buy_shares(
             |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + amount) },
         )?;
 
+        // If is first buy, add as a holder
+        if shares_balance.is_zero() {
+            SHARES_HOLDERS.update(
+                deps.storage,
+                &shares_subject,
+                |holders: Option<Uint128>| -> StdResult<_> { Ok(holders.unwrap_or_default() + Uint128::new(1)) },
+            )?;
+        }
+
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
             amount: coins(protocol_fee.into(), "inj"),
@@ -95,19 +113,28 @@ pub fn buy_shares(
             amount: coins(subject_fee.into(), "inj"),
         };
 
+        let return_payment = info.funds[0].amount - total;
+        let return_payment_result = BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: coins(return_payment.into(), "inj"),
+        };
+
+        let shares_balance_new = shares_balance + amount;
+
         let response = Response::new()
             .add_event(
                 Event::new("buy_shares")
                     .add_attribute("sender", info.sender)
                     .add_attribute("shares_subject", shares_subject)
                     .add_attribute("amount", amount)
-                    .add_attribute("shares_balance", shares_balance)
-                    .add_attribute("shares_supply", shares_supply)
+                    .add_attribute("shares_balance_new", shares_balance_new)
+                    .add_attribute("shares_supply_new", (shares_supply + amount))
                     .add_attribute("total", total)
                     .add_attribute("funds", info.funds[0].amount),
             )
             .add_message(protocol_fee_result)
-            .add_message(subject_fee_result);
+            .add_message(subject_fee_result)
+            .add_message(return_payment_result);
         Ok(response)
     } else {
         Err(ContractError::Std(StdError::generic_err(
