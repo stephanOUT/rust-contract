@@ -26,13 +26,14 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
+    println!("shares_supply: {}", shares_supply);
     let price = get_price(shares_supply);
     println!("Price: {}", price);
 
     let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
     let subject_fee = calculate_fee(price, state.subject_fee_percent);
     let total = price + protocol_fee + subject_fee;
-
+    println!("Total: {}", total);
     // user buying own shares for first time
     if shares_subject == info.sender && shares_supply.is_zero() {
         SHARES_BALANCE.update(

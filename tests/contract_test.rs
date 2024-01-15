@@ -163,6 +163,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // user 1 buys 1 share of user 1
+        println!("user1");
         let info = mock_info("user_1", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
@@ -172,15 +173,18 @@ mod tests {
         assert_eq!(2, res.messages.len());
 
         // user 2 buys 1 share of user 1
+        println!("user2");
         let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
-            amount: Uint128::new(10),
+            amount: Uint128::new(1),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         println!("{:?}", res.events);
  
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
+        println!("user2 finish");
+
     }
 
     #[test]
