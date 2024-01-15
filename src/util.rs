@@ -51,9 +51,12 @@ pub fn get_price(supply: Uint128) -> Uint128 {
     }
     let price2 = 0.1 * (0.6 + supply.u128() as f64 / 5.8).powf(1.8);
     println!("Price Float: {}", price2);
+
     let price_decimal = Decimal::from_str(&price2.to_string()).unwrap();
     println!("Price Decimal: {}", price_decimal);
+
     let price = price_decimal.atomics();
     println!("Price Uint128: {}", price);
+
     return price;
 }
