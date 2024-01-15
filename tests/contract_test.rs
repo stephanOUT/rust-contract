@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // buy first share (cant sell)
-        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             amount: Uint128::new(1),
@@ -208,16 +208,16 @@ mod tests {
         assert_eq!(2, res.messages.len());
 
         // buy another share (can sell)
-        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             amount: Uint128::new(1),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // sell share
-        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::SellShares {
             shares_subject: Addr::unchecked("anyone"),
             amount: Uint128::new(1),
