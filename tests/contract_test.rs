@@ -179,7 +179,7 @@ mod tests {
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         println!("{:?}", res.events);
-
+ 
         assert_eq!(2, res.messages.len());
     }
 

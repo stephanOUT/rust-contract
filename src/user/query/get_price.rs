@@ -19,7 +19,7 @@ pub fn get_price_query(
         .unwrap_or_default();
 
     // Calculate the price without considering fees
-    let base_price = get_price(if is_buy { supply } else { supply - amount }, amount);
+    let base_price = get_price(if is_buy { supply } else { supply - amount });
 
     // Calculate fees if needed
     let (protocol_fee, subject_fee) = if with_fees {

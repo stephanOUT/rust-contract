@@ -26,7 +26,7 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
-    let price = get_price(shares_supply, amount);
+    let price = get_price(shares_supply);
     println!("Price: {}", price);
 
     let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
