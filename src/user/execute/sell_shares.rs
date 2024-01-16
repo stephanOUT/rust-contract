@@ -79,6 +79,7 @@ pub fn sell_shares(
                         .add_attribute("amount", Uint128::new(1))
                         .add_attribute("shares_balance", shares_balance)
                         .add_attribute("shares_supply", shares_supply)
+                        .add_attribute("subject_fees", subject_fee)
                         .add_attribute("total", total),
                 )
                 .add_messages([funds_result, protocol_fee_result, subject_fee_result]);

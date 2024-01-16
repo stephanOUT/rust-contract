@@ -129,6 +129,7 @@ pub fn buy_shares(
                         .add_attribute("amount", Uint128::new(1))
                         .add_attribute("shares_balance_new", shares_balance_new)
                         .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
+                        .add_attribute("subject_fees", subject_fee)
                         .add_attribute("total", total)
                         .add_attribute("funds", info.funds[0].amount),
                 )
@@ -145,6 +146,7 @@ pub fn buy_shares(
                     .add_attribute("amount", Uint128::new(1))
                     .add_attribute("shares_balance_new", shares_balance_new)
                     .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
+                    .add_attribute("subject_fees", subject_fee)
                     .add_attribute("total", total)
                     .add_attribute("funds", info.funds[0].amount),
             )
