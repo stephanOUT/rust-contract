@@ -113,7 +113,7 @@ pub fn buy_shares(
             to_address: shares_subject.to_string(),
             amount: coins(subject_fee.into(), "inj"),
         };
-        let shares_balance_new: Uint128 = shares_balance + amount;
+        let shares_balance_new: Uint128 = shares_balance + Uint128::new(1);
 
         let return_payment = info.funds[0].amount - total;
         if return_payment > Uint128::zero() {
@@ -126,9 +126,9 @@ pub fn buy_shares(
                     Event::new("buy_shares")
                         .add_attribute("sender", info.sender)
                         .add_attribute("shares_subject", shares_subject)
-                        .add_attribute("amount", amount)
+                        .add_attribute("amount", Uint128::new(1))
                         .add_attribute("shares_balance_new", shares_balance_new)
-                        .add_attribute("shares_supply_new", (shares_supply + amount))
+                        .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
                         .add_attribute("total", total)
                         .add_attribute("funds", info.funds[0].amount),
                 )

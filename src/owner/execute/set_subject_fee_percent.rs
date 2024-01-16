@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128};
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128, StdError };
 
 use crate::{state::STATE, ContractError};
 
@@ -10,6 +10,11 @@ pub fn set_subject_fee_percent(
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
+        }
+        if fee_percent > Uint128::new(10000) {
+            return Err(ContractError::Std(StdError::generic_err(
+                "Cannot set fees higher than 10%",
+            )));
         }
         state.subject_fee_percent = fee_percent;
         Ok(state)
