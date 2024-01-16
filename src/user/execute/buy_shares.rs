@@ -1,5 +1,5 @@
 use crate::{
-    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE, SHARES_HOLDERS},
+    state::{SHARES_BALANCE, SHARES_HOLDERS, SHARES_SUPPLY, STATE},
     util::{calculate_fee, get_price},
     ContractError,
 };
@@ -25,8 +25,8 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
-    let price = get_price(shares_supply, Uint128::new(1));
-    println!("Price: {}", price);
+
+    let price = get_price(shares_supply);
 
     let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
     let subject_fee = calculate_fee(price, state.subject_fee_percent);
@@ -98,7 +98,9 @@ pub fn buy_shares(
             SHARES_HOLDERS.update(
                 deps.storage,
                 &shares_subject,
-                |holders: Option<Uint128>| -> StdResult<_> { Ok(holders.unwrap_or_default() + Uint128::new(1)) },
+                |holders: Option<Uint128>| -> StdResult<_> {
+                    Ok(holders.unwrap_or_default() + Uint128::new(1))
+                },
             )?;
         }
 
@@ -111,15 +113,30 @@ pub fn buy_shares(
             to_address: shares_subject.to_string(),
             amount: coins(subject_fee.into(), "inj"),
         };
+        let shares_balance_new: Uint128 = shares_balance + amount;
 
         let return_payment = info.funds[0].amount - total;
-        let return_payment_result = BankMsg::Send {
-            to_address: info.sender.to_string(),
-            amount: coins(return_payment.into(), "inj"),
-        };
-
-        let shares_balance_new = shares_balance + Uint128::new(1);
-
+        if return_payment > Uint128::zero() {
+            let return_payment_result = BankMsg::Send {
+                to_address: info.sender.to_string(),
+                amount: coins(return_payment.into(), "inj"),
+            };
+            let response = Response::new()
+                .add_event(
+                    Event::new("buy_shares")
+                        .add_attribute("sender", info.sender)
+                        .add_attribute("shares_subject", shares_subject)
+                        .add_attribute("amount", amount)
+                        .add_attribute("shares_balance_new", shares_balance_new)
+                        .add_attribute("shares_supply_new", (shares_supply + amount))
+                        .add_attribute("total", total)
+                        .add_attribute("funds", info.funds[0].amount),
+                )
+                .add_message(protocol_fee_result)
+                .add_message(subject_fee_result)
+                .add_message(return_payment_result);
+            return Ok(response);
+        }
         let response = Response::new()
             .add_event(
                 Event::new("buy_shares")
@@ -132,9 +149,8 @@ pub fn buy_shares(
                     .add_attribute("funds", info.funds[0].amount),
             )
             .add_message(protocol_fee_result)
-            .add_message(subject_fee_result)
-            .add_message(return_payment_result);
-        Ok(response)
+            .add_message(subject_fee_result);
+        return Ok(response);
     } else {
         Err(ContractError::Std(StdError::generic_err(
             "buy_shares: supply is zero, user must buy own share first",

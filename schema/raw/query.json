@@ -72,6 +72,27 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_subject_holders"
+      ],
+      "properties": {
+        "get_subject_holders": {
+          "type": "object",
+          "required": [
+            "shares_subject"
+          ],
+          "properties": {
+            "shares_subject": {
+              "$ref": "#/definitions/Addr"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

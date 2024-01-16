@@ -1,10 +1,9 @@
 use crate::{
-    msg::GetPriceResponse,
-    state::{SHARES_BALANCE, SHARES_SUPPLY, STATE, SHARES_HOLDERS},
+    state::{SHARES_BALANCE, SHARES_HOLDERS, SHARES_SUPPLY, STATE},
     util::{calculate_fee, get_price},
     ContractError,
 };
-use cosmwasm_std::{coins, Addr, BankMsg, Coin, Event, StdError, StdResult, Uint128};
+use cosmwasm_std::{coins, Addr, BankMsg, Event, StdError, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 pub fn sell_shares(
@@ -19,19 +18,12 @@ pub fn sell_shares(
     let shares_balance = SHARES_BALANCE
         .may_load(deps.storage, (&info.sender, &shares_subject))?
         .unwrap_or_default();
-    if shares_supply > Uint128::new(1) {
-        let price = get_price(
-            (shares_supply - Uint128::new(1)),
-            Uint128::new(1),
-        );
-        println!("Price: {}", price);
+    if shares_supply > amount_of_shares_to_sell {
+        let price = get_price(shares_supply - amount_of_shares_to_sell);
 
         let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
         let subject_fee = calculate_fee(price, state.subject_fee_percent);
         let total = price - protocol_fee - subject_fee;
-        println!("subject_fee: {}", subject_fee);
-        println!("protocol_fee: {}", protocol_fee);
-        println!("total: {}", total);
 
         let balance = SHARES_BALANCE
             .may_load(deps.storage, (&info.sender, &shares_subject))?
@@ -58,7 +50,9 @@ pub fn sell_shares(
                 SHARES_HOLDERS.update(
                     deps.storage,
                     &shares_subject,
-                    |holders: Option<Uint128>| -> StdResult<_> { Ok(holders.unwrap_or_default() - Uint128::new(1)) },
+                    |holders: Option<Uint128>| -> StdResult<_> {
+                        Ok(holders.unwrap_or_default() - Uint128::new(1))
+                    },
                 )?;
             }
 

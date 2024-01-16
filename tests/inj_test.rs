@@ -40,7 +40,7 @@ mod inj_tests {
                 code_id,
                 &InstantiateMsg {},
                 None,  // contract admin used for migration, not the same as cw1_whitelist admin
-                None,  // contract label
+                Some("label"),  // contract label
                 &[],   // funds
                 admin, // signer
             )
@@ -157,7 +157,7 @@ mod inj_tests {
                 code_id,
                 &InstantiateMsg {},
                 None,  // contract admin used for migration, not the same as cw1_whitelist admin
-                None,  // contract label
+                Some("label"),  // contract label
                 &[],   // funds
                 admin, // signer
             )
