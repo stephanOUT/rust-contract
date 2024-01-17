@@ -26,7 +26,6 @@ pub fn buy_shares(
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 
-
     let price = get_price(shares_supply);
 
     let protocol_fee = calculate_fee(price, state.protocol_buy_fee_percent);
@@ -39,13 +38,17 @@ pub fn buy_shares(
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
-            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + Uint128::new(1)) },
+            |balance: Option<Uint128>| -> StdResult<_> {
+                Ok(balance.unwrap_or_default() + Uint128::new(1))
+            },
         )?;
 
         SHARES_SUPPLY.update(
             deps.storage,
             &shares_subject,
-            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + Uint128::new(1)) },
+            |supply: Option<Uint128>| -> StdResult<_> {
+                Ok(supply.unwrap_or_default() + Uint128::new(1))
+            },
         )?;
 
         SHARES_HOLDERS.update(
@@ -56,17 +59,17 @@ pub fn buy_shares(
 
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: vec![],
+            amount: coins(protocol_fee.into(), "inj"),
         };
 
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: vec![],
+            amount: coins(subject_fee.into(), "inj"),
         };
 
         let referral_fee_result = BankMsg::Send {
             to_address: referral.to_string(),
-            amount: vec![],
+            amount: coins(referral_fee.into(), "inj"),
         };
 
         let shares_balance_new = shares_balance + Uint128::new(1);
@@ -78,14 +81,14 @@ pub fn buy_shares(
                     .add_attribute("shares_subject", shares_subject)
                     .add_attribute("amount", Uint128::new(1))
                     .add_attribute("shares_balance_new", shares_balance_new)
-                    .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
+                    .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
                     .add_attribute("subject_fees", subject_fee)
                     .add_attribute("referral_fees", referral_fee)
                     .add_attribute("referral", referral)
-                    .add_attribute("total", total),
+                    .add_attribute("total", total)
+                    .add_attribute("funds", info.funds[0].amount),
             )
-            .add_message(protocol_fee_result)
-            .add_message(subject_fee_result);
+            .add_messages([protocol_fee_result, subject_fee_result, referral_fee_result]);
         Ok(response)
     }
     // anyone buying shares
@@ -94,13 +97,17 @@ pub fn buy_shares(
         SHARES_BALANCE.update(
             deps.storage,
             (&info.sender, &shares_subject),
-            |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + Uint128::new(1)) },
+            |balance: Option<Uint128>| -> StdResult<_> {
+                Ok(balance.unwrap_or_default() + Uint128::new(1))
+            },
         )?;
 
         SHARES_SUPPLY.update(
             deps.storage,
             &shares_subject,
-            |supply: Option<Uint128>| -> StdResult<_> { Ok(supply.unwrap_or_default() + Uint128::new(1)) },
+            |supply: Option<Uint128>| -> StdResult<_> {
+                Ok(supply.unwrap_or_default() + Uint128::new(1))
+            },
         )?;
 
         // If is first buy, add as a holder
@@ -143,16 +150,19 @@ pub fn buy_shares(
                         .add_attribute("shares_subject", shares_subject)
                         .add_attribute("amount", Uint128::new(1))
                         .add_attribute("shares_balance_new", shares_balance_new)
-                        .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
+                        .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
                         .add_attribute("subject_fees", subject_fee)
                         .add_attribute("referral_fees", referral_fee)
                         .add_attribute("referral", referral)
                         .add_attribute("total", total)
                         .add_attribute("funds", info.funds[0].amount),
                 )
-                .add_message(protocol_fee_result)
-                .add_message(subject_fee_result)
-                .add_message(return_payment_result);
+                .add_messages([
+                    protocol_fee_result,
+                    subject_fee_result,
+                    referral_fee_result,
+                    return_payment_result,
+                ]);
             return Ok(response);
         }
         let response = Response::new()
@@ -162,13 +172,14 @@ pub fn buy_shares(
                     .add_attribute("shares_subject", shares_subject)
                     .add_attribute("amount", Uint128::new(1))
                     .add_attribute("shares_balance_new", shares_balance_new)
-                    .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
+                    .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
                     .add_attribute("subject_fees", subject_fee)
+                    .add_attribute("referral_fees", referral_fee)
+                    .add_attribute("referral", referral)
                     .add_attribute("total", total)
                     .add_attribute("funds", info.funds[0].amount),
             )
-            .add_message(protocol_fee_result)
-            .add_message(subject_fee_result);
+            .add_messages([protocol_fee_result, subject_fee_result, referral_fee_result]);
         return Ok(response);
     } else {
         Err(ContractError::Std(StdError::generic_err(

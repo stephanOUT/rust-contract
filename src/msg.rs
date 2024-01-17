@@ -17,7 +17,7 @@ pub enum ExecuteMsg {
     SetReferralBuyFeePercent { referral_buy_fee_percent: Uint128 },
     SetReferralSellFeePercent { referral_sell_fee_percent: Uint128 },
     BuyShares { shares_subject: Addr, referral: Addr },
-    SellShares { shares_subject: Addr },
+    SellShares { shares_subject: Addr, referral: Addr },
     ToggleTrading { is_enabled: bool },
 }
 

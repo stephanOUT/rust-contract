@@ -20,7 +20,7 @@ mod inj_tests {
             )
             .unwrap();
         let admin = &accs[0];
-        let user = &accs[1];
+        let user_1 = &accs[1];
         let user_2 = &accs[2];
         // `Wasm` is the module we use to interact with cosmwasm releated logic on the appchain
         // it implements `Module` trait which you will see more later.
@@ -39,9 +39,9 @@ mod inj_tests {
             .instantiate(
                 code_id,
                 &InstantiateMsg {},
-                None,  // contract admin used for migration, not the same as cw1_whitelist admin
-                Some("label"),  // contract label
-                &[],   // funds
+                None, // contract admin used for migration, not the same as cw1_whitelist admin
+                Some("label"), // contract label
+                &[],  // funds
                 admin, // signer
             )
             .unwrap()
@@ -61,7 +61,7 @@ mod inj_tests {
         // have user buy a share of user
 
         let balance_request = QueryBalanceRequest {
-            address: user.address(),
+            address: user_1.address(),
             denom: "inj".to_string(),
         };
 
@@ -74,16 +74,16 @@ mod inj_tests {
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
-                shares_subject: Addr::unchecked(user.address()),
-                amount: Uint128::new(1),
+                shares_subject: Addr::unchecked(user_1.address()),
+                referral: Addr::unchecked(user_2.address()),
             },
             &[], // empty funds when buying first share
-            user,
+            user_1,
         )
         .unwrap();
 
         let balance_request = QueryBalanceRequest {
-            address: user.address(),
+            address: user_1.address(),
             denom: "inj".to_string(),
         };
 
@@ -98,8 +98,8 @@ mod inj_tests {
             .query::<QueryMsg, GetShareBalanceResponse>(
                 &contract_addr,
                 &QueryMsg::GetShareBalance {
-                    shares_subject: Addr::unchecked(user.address()),
-                    my_address: Addr::unchecked(user.address()),
+                    shares_subject: Addr::unchecked(user_1.address()),
+                    my_address: Addr::unchecked(user_1.address()),
                 },
             )
             .unwrap();
@@ -141,7 +141,7 @@ mod inj_tests {
             )
             .unwrap();
         let admin = &accs[0];
-        let user = &accs[1];
+        let user_1 = &accs[1];
         let user_2 = &accs[2];
         let wasm = Wasm::new(&app);
         let bank = Bank::new(&app);
@@ -156,9 +156,9 @@ mod inj_tests {
             .instantiate(
                 code_id,
                 &InstantiateMsg {},
-                None,  // contract admin used for migration, not the same as cw1_whitelist admin
-                Some("label"),  // contract label
-                &[],   // funds
+                None, // contract admin used for migration, not the same as cw1_whitelist admin
+                Some("label"), // contract label
+                &[],  // funds
                 admin, // signer
             )
             .unwrap()
@@ -166,7 +166,7 @@ mod inj_tests {
             .address;
         println!("user 1: buying initial share");
         let balance_request = QueryBalanceRequest {
-            address: user.address(),
+            address: user_1.address(),
             denom: "inj".to_string(),
         };
 
@@ -176,16 +176,16 @@ mod inj_tests {
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
-                shares_subject: Addr::unchecked(user.address()),
-                amount: Uint128::new(1),
+                shares_subject: Addr::unchecked(user_1.address()),
+                referral: Addr::unchecked(user_2.address()),
             },
             &[], // empty funds when buying first share
-            user,
+            user_1,
         )
         .unwrap();
 
         let balance_request = QueryBalanceRequest {
-            address: user.address(),
+            address: user_1.address(),
             denom: "inj".to_string(),
         };
 
@@ -205,7 +205,7 @@ mod inj_tests {
             &contract_addr,
             &ExecuteMsg::BuyShares {
                 shares_subject: Addr::unchecked(user_2.address()),
-                amount: Uint128::new(1),
+                referral: Addr::unchecked(user_1.address()),
             },
             &[], // empty funds when buying first share
             user_2,
@@ -232,8 +232,8 @@ mod inj_tests {
         wasm.execute::<ExecuteMsg>(
             &contract_addr,
             &ExecuteMsg::BuyShares {
-                shares_subject: Addr::unchecked(user.address()),
-                amount: Uint128::new(1),
+                shares_subject: Addr::unchecked(user_1.address()),
+                referral: Addr::unchecked(user_2.address()),
             },
             funds, // send funds when buying shares
             user_2,

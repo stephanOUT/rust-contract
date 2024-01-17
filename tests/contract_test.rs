@@ -25,11 +25,14 @@ mod tests {
         assert_eq!(
             State {
                 owner: Addr::unchecked("creator"),
-                subject_fee_percent: Uint128::new(5000),
-                protocol_fee_percent: Uint128::new(5000),
+                subject_buy_fee_percent: Uint128::new(3000),
+                subject_sell_fee_percent: Uint128::new(3000),
+                protocol_buy_fee_percent: Uint128::new(2500),
+                protocol_sell_fee_percent: Uint128::new(3000),
+                referral_buy_fee_percent: Uint128::new(500),
+                referral_sell_fee_percent: Uint128::new(0),
                 protocol_fee_destination: Addr::unchecked("creator"),
                 trading_is_enabled: true,
-                buy_sell_quantity_limit: Uint128::new(20),
             },
             state
         );
@@ -76,8 +79,8 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = ExecuteMsg::SetProtocolFeePercent {
-            protocol_fee_percent: Uint128::new(10),
+        let msg = ExecuteMsg::SetProtocolBuyFeePercent {
+            protocol_buy_fee_percent: Uint128::new(10),
         };
 
         // we can just call .unwrap() to assert this was a success
@@ -87,7 +90,7 @@ mod tests {
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let state: State = from_json(&res).unwrap();
-        assert_eq!(Uint128::new(10), state.protocol_fee_percent);
+        assert_eq!(Uint128::new(10), state.protocol_buy_fee_percent);
     }
 
     #[test]
@@ -102,8 +105,8 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = ExecuteMsg::SetSubjectFeePercent {
-            subject_fee_percent: Uint128::new(10),
+        let msg = ExecuteMsg::SetSubjectBuyFeePercent {
+            subject_buy_fee_percent: Uint128::new(10),
         };
 
         // we can just call .unwrap() to assert this was a success
@@ -113,7 +116,7 @@ mod tests {
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetState {}).unwrap();
         let state: State = from_json(&res).unwrap();
-        assert_eq!(Uint128::new(10), state.subject_fee_percent);
+        assert_eq!(Uint128::new(10), state.subject_buy_fee_percent);
     }
 
     #[test]
@@ -130,14 +133,14 @@ mod tests {
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: shares_to_buy,
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         println!("{:?}", res.events);
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // check how much user gets back
-       // println!("{:?}", res.messages);
+        // println!("{:?}", res.messages);
 
         // it worked, let's query the shares balance
         let res = query(
@@ -167,24 +170,23 @@ mod tests {
         let info = mock_info("user_1", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // user 2 buys 1 share of user 1
         println!("user2");
         let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         println!("{:?}", res.events);
- 
-        assert_eq!(3, res.messages.len());
-        println!("user2 finish");
 
+        assert_eq!(4, res.messages.len());
+        println!("user2 finish");
     }
 
     #[test]
@@ -202,28 +204,28 @@ mod tests {
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // buy another share (can sell)
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(4, res.messages.len());
 
         // sell share
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::SellShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
+        assert_eq!(4, res.messages.len());
 
         let res = query(
             deps.as_ref(),
@@ -292,10 +294,10 @@ mod tests {
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
-            amount: Uint128::new(1),
+            referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // get share balance
         let msg = QueryMsg::GetShareBalance {

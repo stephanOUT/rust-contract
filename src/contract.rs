@@ -99,11 +99,14 @@ pub fn execute(
             }
             buy_shares(deps, info, shares_subject, referral)
         }
-        ExecuteMsg::SellShares { shares_subject } => {
+        ExecuteMsg::SellShares {
+            shares_subject,
+            referral,
+        } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
-            sell_shares(deps, info, shares_subject)
+            sell_shares(deps, info, shares_subject, referral)
         }
         ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled),
     }
