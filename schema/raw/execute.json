@@ -26,16 +26,16 @@
     {
       "type": "object",
       "required": [
-        "set_protocol_fee_percent"
+        "set_protocol_buy_fee_percent"
       ],
       "properties": {
-        "set_protocol_fee_percent": {
+        "set_protocol_buy_fee_percent": {
           "type": "object",
           "required": [
-            "protocol_fee_percent"
+            "protocol_buy_fee_percent"
           ],
           "properties": {
-            "protocol_fee_percent": {
+            "protocol_buy_fee_percent": {
               "$ref": "#/definitions/Uint128"
             }
           },
@@ -47,16 +47,100 @@
     {
       "type": "object",
       "required": [
-        "set_subject_fee_percent"
+        "set_protocol_sell_fee_percent"
       ],
       "properties": {
-        "set_subject_fee_percent": {
+        "set_protocol_sell_fee_percent": {
           "type": "object",
           "required": [
-            "subject_fee_percent"
+            "protocol_sell_fee_percent"
           ],
           "properties": {
-            "subject_fee_percent": {
+            "protocol_sell_fee_percent": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_subject_buy_fee_percent"
+      ],
+      "properties": {
+        "set_subject_buy_fee_percent": {
+          "type": "object",
+          "required": [
+            "subject_buy_fee_percent"
+          ],
+          "properties": {
+            "subject_buy_fee_percent": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_subject_sell_fee_percent"
+      ],
+      "properties": {
+        "set_subject_sell_fee_percent": {
+          "type": "object",
+          "required": [
+            "subject_sell_fee_percent"
+          ],
+          "properties": {
+            "subject_sell_fee_percent": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_referral_buy_fee_percent"
+      ],
+      "properties": {
+        "set_referral_buy_fee_percent": {
+          "type": "object",
+          "required": [
+            "referral_buy_fee_percent"
+          ],
+          "properties": {
+            "referral_buy_fee_percent": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_referral_sell_fee_percent"
+      ],
+      "properties": {
+        "set_referral_sell_fee_percent": {
+          "type": "object",
+          "required": [
+            "referral_sell_fee_percent"
+          ],
+          "properties": {
+            "referral_sell_fee_percent": {
               "$ref": "#/definitions/Uint128"
             }
           },
@@ -74,12 +158,12 @@
         "buy_shares": {
           "type": "object",
           "required": [
-            "amount",
+            "referral",
             "shares_subject"
           ],
           "properties": {
-            "amount": {
-              "$ref": "#/definitions/Uint128"
+            "referral": {
+              "$ref": "#/definitions/Addr"
             },
             "shares_subject": {
               "$ref": "#/definitions/Addr"
@@ -99,12 +183,12 @@
         "sell_shares": {
           "type": "object",
           "required": [
-            "amount",
+            "referral",
             "shares_subject"
           ],
           "properties": {
-            "amount": {
-              "$ref": "#/definitions/Uint128"
+            "referral": {
+              "$ref": "#/definitions/Addr"
             },
             "shares_subject": {
               "$ref": "#/definitions/Addr"
@@ -129,27 +213,6 @@
           "properties": {
             "is_enabled": {
               "type": "boolean"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "set_buy_sell_quantity_limit"
-      ],
-      "properties": {
-        "set_buy_sell_quantity_limit": {
-          "type": "object",
-          "required": [
-            "limit"
-          ],
-          "properties": {
-            "limit": {
-              "$ref": "#/definitions/Uint128"
             }
           },
           "additionalProperties": false

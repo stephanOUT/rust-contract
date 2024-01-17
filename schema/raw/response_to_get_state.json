@@ -3,27 +3,39 @@
   "title": "State",
   "type": "object",
   "required": [
-    "buy_sell_quantity_limit",
     "owner",
+    "protocol_buy_fee_percent",
     "protocol_fee_destination",
-    "protocol_fee_percent",
-    "subject_fee_percent",
+    "protocol_sell_fee_percent",
+    "referral_buy_fee_percent",
+    "referral_sell_fee_percent",
+    "subject_buy_fee_percent",
+    "subject_sell_fee_percent",
     "trading_is_enabled"
   ],
   "properties": {
-    "buy_sell_quantity_limit": {
-      "$ref": "#/definitions/Uint128"
-    },
     "owner": {
       "$ref": "#/definitions/Addr"
+    },
+    "protocol_buy_fee_percent": {
+      "$ref": "#/definitions/Uint128"
     },
     "protocol_fee_destination": {
       "$ref": "#/definitions/Addr"
     },
-    "protocol_fee_percent": {
+    "protocol_sell_fee_percent": {
       "$ref": "#/definitions/Uint128"
     },
-    "subject_fee_percent": {
+    "referral_buy_fee_percent": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "referral_sell_fee_percent": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "subject_buy_fee_percent": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "subject_sell_fee_percent": {
       "$ref": "#/definitions/Uint128"
     },
     "trading_is_enabled": {
