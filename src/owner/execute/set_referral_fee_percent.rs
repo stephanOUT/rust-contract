@@ -2,7 +2,7 @@ use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128, StdError };
 
 use crate::{state::STATE, ContractError};
 
-pub fn set_referal_buy_fee_percent(
+pub fn set_referral_buy_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
     fee_percent: Uint128,
@@ -16,14 +16,14 @@ pub fn set_referal_buy_fee_percent(
                 "Cannot set fees higher than 2.5%",
             )));
         }
-        state.referal_buy_fee_percent = fee_percent;
+        state.referral_buy_fee_percent = fee_percent;
         Ok(state)
     })?;
     Ok(Response::new()
-        .add_event(Event::new("set_referal_buy_fee_percent").add_attribute("fee_percent", fee_percent)))
+        .add_event(Event::new("set_referral_buy_fee_percent").add_attribute("fee_percent", fee_percent)))
 }
 
-pub fn set_referal_sell_fee_percent(
+pub fn set_referral_sell_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
     fee_percent: Uint128,
@@ -37,9 +37,9 @@ pub fn set_referal_sell_fee_percent(
                 "Cannot set fees higher than 2.5%",
             )));
         }
-        state.referal_sell_fee_percent = fee_percent;
+        state.referral_sell_fee_percent = fee_percent;
         Ok(state)
     })?;
     Ok(Response::new()
-        .add_event(Event::new("set_referal_sell_fee_percent").add_attribute("fee_percent", fee_percent)))
+        .add_event(Event::new("set_referral_sell_fee_percent").add_attribute("fee_percent", fee_percent)))
 }

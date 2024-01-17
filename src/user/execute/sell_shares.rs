@@ -23,8 +23,8 @@ pub fn sell_shares(
 
         let protocol_fee = calculate_fee(price, state.protocol_sell_fee_percent);
         let subject_fee = calculate_fee(price, state.subject_sell_fee_percent);
-        let referal_fee = calculate_fee(price, state.referal_sell_fee_percent);
-        let total = price - protocol_fee - subject_fee - referal_fee;
+        let referral_fee = calculate_fee(price, state.referral_sell_fee_percent);
+        let total = price - protocol_fee - subject_fee - referral_fee;
 
         let balance = SHARES_BALANCE
             .may_load(deps.storage, (&info.sender, &shares_subject))?

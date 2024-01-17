@@ -18,23 +18,37 @@ pub fn get_price_query(
         .unwrap_or_default();
 
     // Calculate the price without considering fees
-    let base_price = get_price(if is_buy { supply } else { supply - Uint128::new(1) });
+    let base_price = get_price(if is_buy {
+        supply
+    } else {
+        supply - Uint128::new(1)
+    });
 
     // Calculate fees if needed
-    let (protocol_fee, subject_fee) = if with_fees {
+    let (protocol_fee, subject_fee, referral_fee) = if with_fees && is_buy {
+        // BUY
         (
-            calculate_fee(base_price, state.protocol_fee_percent),
-            calculate_fee(base_price, state.subject_fee_percent),
+            calculate_fee(base_price, state.protocol_buy_fee_percent),
+            calculate_fee(base_price, state.subject_buy_fee_percent),
+            calculate_fee(base_price, state.referral_buy_fee_percent),
+        )
+    } else if with_fees && !is_buy {
+        // SELL
+        (
+            calculate_fee(base_price, state.protocol_sell_fee_percent),
+            calculate_fee(base_price, state.subject_sell_fee_percent),
+            calculate_fee(base_price, state.referral_sell_fee_percent),
         )
     } else {
-        (Uint128::zero(), Uint128::zero())
+        // NO FEES
+        (Uint128::zero(), Uint128::zero(), Uint128::zero())
     };
 
     // Adjust the price based on whether it's a buy or sell
     let price_with_fees = if is_buy {
-        base_price + protocol_fee + subject_fee
+        base_price + protocol_fee + subject_fee + referral_fee
     } else {
-        base_price - protocol_fee - subject_fee
+        base_price - protocol_fee - subject_fee - referral_fee
     };
 
     Ok(GetPriceResponse {

@@ -10,7 +10,7 @@ pub fn buy_shares(
     deps: DepsMut,
     info: MessageInfo,
     shares_subject: Addr,
-    referal: Addr,
+    referral: Addr,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
 
@@ -31,8 +31,8 @@ pub fn buy_shares(
 
     let protocol_fee = calculate_fee(price, state.protocol_buy_fee_percent);
     let subject_fee = calculate_fee(price, state.subject_buy_fee_percent);
-    let referal_fee = calculate_fee(price, state.referal_buy_fee_percent);
-    let total = price + protocol_fee + subject_fee + referal_fee;
+    let referral_fee = calculate_fee(price, state.referral_buy_fee_percent);
+    let total = price + protocol_fee + subject_fee + referral_fee;
 
     // user buying own shares for first time
     if shares_subject == info.sender && shares_supply.is_zero() {
@@ -64,8 +64,8 @@ pub fn buy_shares(
             amount: vec![],
         };
 
-        let referal_fee_result = BankMsg::Send {
-            to_address: referal.to_string(),
+        let referral_fee_result = BankMsg::Send {
+            to_address: referral.to_string(),
             amount: vec![],
         };
 
@@ -80,8 +80,8 @@ pub fn buy_shares(
                     .add_attribute("shares_balance_new", shares_balance_new)
                     .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
                     .add_attribute("subject_fees", subject_fee)
-                    .add_attribute("referal_fees", referal_fee)
-                    .add_attribute("referal", referal)
+                    .add_attribute("referral_fees", referral_fee)
+                    .add_attribute("referral", referral)
                     .add_attribute("total", total),
             )
             .add_message(protocol_fee_result)
@@ -123,9 +123,9 @@ pub fn buy_shares(
             to_address: shares_subject.to_string(),
             amount: coins(subject_fee.into(), "inj"),
         };
-        let referal_fee_result = BankMsg::Send {
-            to_address: referal.to_string(),
-            amount: coins(referal_fee.into(), "inj"),
+        let referral_fee_result = BankMsg::Send {
+            to_address: referral.to_string(),
+            amount: coins(referral_fee.into(), "inj"),
         };
 
         let shares_balance_new: Uint128 = shares_balance + Uint128::new(1);
@@ -145,8 +145,8 @@ pub fn buy_shares(
                         .add_attribute("shares_balance_new", shares_balance_new)
                         .add_attribute("shares_supply_new", (shares_supply + Uint128::new(1)))
                         .add_attribute("subject_fees", subject_fee)
-                        .add_attribute("referal_fees", referal_fee)
-                        .add_attribute("referal", referal)
+                        .add_attribute("referral_fees", referral_fee)
+                        .add_attribute("referral", referral)
                         .add_attribute("total", total)
                         .add_attribute("funds", info.funds[0].amount),
                 )

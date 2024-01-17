@@ -1,14 +1,21 @@
 #[cfg(not(feature = "library"))]
 use crate::{
-    msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg, GetSubjectHoldersResponse},
-    owner::execute::{set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent, set_subject_buy_fee_percent, set_subject_sell_fee_percent, set_referal_buy_fee_percent, set_referal_sell_fee_percent },
+    msg::{
+        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse,
+        InstantiateMsg, QueryMsg,
+    },
+    owner::execute::{
+        set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent,
+        set_referral_buy_fee_percent, set_referral_sell_fee_percent, set_subject_buy_fee_percent,
+        set_subject_sell_fee_percent,
+    },
     state::{State, STATE},
     user::execute::{buy_shares, sell_shares},
     user::query::get_price_query,
     ContractError,
 };
 use crate::{
-    owner::execute::{ toggle_trading },
+    owner::execute::toggle_trading,
     user::query::{get_share_balance, get_state, get_subject_holders},
 };
 use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, Event, StdResult, Uint128};
@@ -28,12 +35,12 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_buy_fee_percent: Uint128::new(3000),   // 3.000%
-        subject_sell_fee_percent: Uint128::new(3000),  // 3.000%
-        protocol_buy_fee_percent: Uint128::new(2500),  // 2.500%
+        subject_buy_fee_percent: Uint128::new(3000), // 3.000%
+        subject_sell_fee_percent: Uint128::new(3000), // 3.000%
+        protocol_buy_fee_percent: Uint128::new(2500), // 2.500%
         protocol_sell_fee_percent: Uint128::new(3000), // 3.000%
-        referal_buy_fee_percent: Uint128::new(500),    // 0.500%
-        referal_sell_fee_percent: Uint128::new(0),     // 0.000%
+        referral_buy_fee_percent: Uint128::new(500), // 0.500%
+        referral_sell_fee_percent: Uint128::new(0),  // 0.000%
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
     };
@@ -49,8 +56,8 @@ pub fn instantiate(
         .add_attribute("subject_sell_fee_percent", Uint128::new(3000))
         .add_attribute("protocol_buy_fee_percent", Uint128::new(2500))
         .add_attribute("protocol_sell_fee_percent", Uint128::new(3000))
-        .add_attribute("referal_buy_fee_percent", Uint128::new(500))
-        .add_attribute("referal_sell_fee_percent", Uint128::new(0)))
+        .add_attribute("referral_buy_fee_percent", Uint128::new(500))
+        .add_attribute("referral_sell_fee_percent", Uint128::new(0)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -77,30 +84,28 @@ pub fn execute(
         ExecuteMsg::SetSubjectSellFeePercent {
             subject_sell_fee_percent,
         } => set_subject_sell_fee_percent(deps, info, subject_sell_fee_percent),
-        ExecuteMsg::SetReferalBuyFeePercent {
-            referal_buy_fee_percent,
-        } => set_referal_buy_fee_percent(deps, info, referal_buy_fee_percent),
-        ExecuteMsg::SetReferalSellFeePercent {
-            referal_sell_fee_percent,
-        } => set_referal_sell_fee_percent(deps, info, referal_sell_fee_percent),
+        ExecuteMsg::SetReferralBuyFeePercent {
+            referral_buy_fee_percent,
+        } => set_referral_buy_fee_percent(deps, info, referral_buy_fee_percent),
+        ExecuteMsg::SetReferralSellFeePercent {
+            referral_sell_fee_percent,
+        } => set_referral_sell_fee_percent(deps, info, referral_sell_fee_percent),
         ExecuteMsg::BuyShares {
             shares_subject,
-            referal
+            referral,
         } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
-            buy_shares(deps, info, shares_subject, referal)
+            buy_shares(deps, info, shares_subject, referral)
         }
-        ExecuteMsg::SellShares {
-            shares_subject,
-        } => {
+        ExecuteMsg::SellShares { shares_subject } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
             sell_shares(deps, info, shares_subject)
         }
-        ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled)
+        ExecuteMsg::ToggleTrading { is_enabled } => toggle_trading(deps, info, is_enabled),
     }
 }
 
@@ -126,11 +131,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             my_address,
         )?),
         QueryMsg::GetState {} => to_json_binary(&get_state(deps)?),
-        QueryMsg::GetSubjectHolders {
-            shares_subject,
-        } => to_json_binary::<GetSubjectHoldersResponse>(&get_subject_holders(
-            deps,
-            shares_subject,
-        )?),
+        QueryMsg::GetSubjectHolders { shares_subject } => {
+            to_json_binary::<GetSubjectHoldersResponse>(&get_subject_holders(deps, shares_subject)?)
+        }
     }
 }

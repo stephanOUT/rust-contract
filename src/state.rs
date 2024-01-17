@@ -10,8 +10,8 @@ pub struct State {
     pub subject_sell_fee_percent: Uint128,
     pub protocol_buy_fee_percent: Uint128,
     pub protocol_sell_fee_percent: Uint128,
-    pub referal_buy_fee_percent: Uint128,
-    pub referal_sell_fee_percent: Uint128,
+    pub referral_buy_fee_percent: Uint128,
+    pub referral_sell_fee_percent: Uint128,
     pub protocol_fee_destination: Addr,
     pub trading_is_enabled: bool,
 }
