@@ -10,9 +10,13 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     SetFeeDestination { fee_destination: Addr },
-    SetProtocolFeePercent { protocol_fee_percent: Uint128 },
-    SetSubjectFeePercent { subject_fee_percent: Uint128 },
-    BuyShares { shares_subject: Addr },
+    SetProtocolBuyFeePercent { protocol_buy_fee_percent: Uint128 },
+    SetProtocolSellFeePercent { protocol_sell_fee_percent: Uint128 },
+    SetSubjectBuyFeePercent { subject_buy_fee_percent: Uint128 },
+    SetSubjectSellFeePercent { subject_sell_fee_percent: Uint128 },
+    SetReferalBuyFeePercent { referal_buy_fee_percent: Uint128 },
+    SetReferalSellFeePercent { referal_sell_fee_percent: Uint128 },
+    BuyShares { shares_subject: Addr, referal: Addr },
     SellShares { shares_subject: Addr },
     ToggleTrading { is_enabled: bool },
 }

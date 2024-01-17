@@ -2,7 +2,7 @@ use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128, StdError };
 
 use crate::{state::STATE, ContractError};
 
-pub fn set_protocol_buy_fee_percent(
+pub fn set_referal_buy_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
     fee_percent: Uint128,
@@ -11,20 +11,19 @@ pub fn set_protocol_buy_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(5000) {
+        if fee_percent > Uint128::new(2500) {
             return Err(ContractError::Std(StdError::generic_err(
-                "Cannot set fees higher than 5%",
+                "Cannot set fees higher than 2.5%",
             )));
         }
-        state.protocol_buy_fee_percent = fee_percent;
+        state.referal_buy_fee_percent = fee_percent;
         Ok(state)
     })?;
-    Ok(Response::new().add_event(
-        Event::new("set_protocol_buy_fee_percent").add_attribute("fee_percent", fee_percent),
-    ))
+    Ok(Response::new()
+        .add_event(Event::new("set_referal_buy_fee_percent").add_attribute("fee_percent", fee_percent)))
 }
 
-pub fn set_protocol_sell_fee_percent(
+pub fn set_referal_sell_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
     fee_percent: Uint128,
@@ -33,15 +32,14 @@ pub fn set_protocol_sell_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(5000) {
+        if fee_percent > Uint128::new(2500) {
             return Err(ContractError::Std(StdError::generic_err(
-                "Cannot set fees higher than 5%",
+                "Cannot set fees higher than 2.5%",
             )));
         }
-        state.protocol_sell_fee_percent = fee_percent;
+        state.referal_sell_fee_percent = fee_percent;
         Ok(state)
     })?;
-    Ok(Response::new().add_event(
-        Event::new("set_protocol_sell_fee_percent").add_attribute("fee_percent", fee_percent),
-    ))
+    Ok(Response::new()
+        .add_event(Event::new("set_referal_sell_fee_percent").add_attribute("fee_percent", fee_percent)))
 }

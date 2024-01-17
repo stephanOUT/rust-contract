@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use crate::{
     msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg, GetSubjectHoldersResponse},
-    owner::execute::{set_fee_destination, set_protocol_fee_percent, set_subject_fee_percent},
+    owner::execute::{set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent, set_subject_buy_fee_percent, set_subject_sell_fee_percent, set_referal_buy_fee_percent, set_referal_sell_fee_percent },
     state::{State, STATE},
     user::execute::{buy_shares, sell_shares},
     user::query::get_price_query,
@@ -28,8 +28,12 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_fee_percent: Uint128::new(5000),  // 5.000%
-        protocol_fee_percent: Uint128::new(5000), // 5.000%
+        subject_buy_fee_percent: Uint128::new(3000),   // 3.000%
+        subject_sell_fee_percent: Uint128::new(3000),  // 3.000%
+        protocol_buy_fee_percent: Uint128::new(2500),  // 2.500%
+        protocol_sell_fee_percent: Uint128::new(3000), // 3.000%
+        referal_buy_fee_percent: Uint128::new(500),    // 0.500%
+        referal_sell_fee_percent: Uint128::new(0),     // 0.000%
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
     };
@@ -41,8 +45,12 @@ pub fn instantiate(
         .add_event(Event::new("contract_instantiated"))
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
-        .add_attribute("subject_fee_percent", Uint128::new(5000))
-        .add_attribute("protocol_fee_percent", Uint128::new(5000)))
+        .add_attribute("subject_buy_fee_percent", Uint128::new(3000))
+        .add_attribute("subject_sell_fee_percent", Uint128::new(3000))
+        .add_attribute("protocol_buy_fee_percent", Uint128::new(2500))
+        .add_attribute("protocol_sell_fee_percent", Uint128::new(3000))
+        .add_attribute("referal_buy_fee_percent", Uint128::new(500))
+        .add_attribute("referal_sell_fee_percent", Uint128::new(0)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -57,19 +65,32 @@ pub fn execute(
         ExecuteMsg::SetFeeDestination { fee_destination } => {
             set_fee_destination(deps, info, fee_destination)
         }
-        ExecuteMsg::SetProtocolFeePercent {
-            protocol_fee_percent,
-        } => set_protocol_fee_percent(deps, info, protocol_fee_percent),
-        ExecuteMsg::SetSubjectFeePercent {
-            subject_fee_percent,
-        } => set_subject_fee_percent(deps, info, subject_fee_percent),
+        ExecuteMsg::SetProtocolBuyFeePercent {
+            protocol_buy_fee_percent,
+        } => set_protocol_buy_fee_percent(deps, info, protocol_buy_fee_percent),
+        ExecuteMsg::SetProtocolSellFeePercent {
+            protocol_sell_fee_percent,
+        } => set_protocol_sell_fee_percent(deps, info, protocol_sell_fee_percent),
+        ExecuteMsg::SetSubjectBuyFeePercent {
+            subject_buy_fee_percent,
+        } => set_subject_buy_fee_percent(deps, info, subject_buy_fee_percent),
+        ExecuteMsg::SetSubjectSellFeePercent {
+            subject_sell_fee_percent,
+        } => set_subject_sell_fee_percent(deps, info, subject_sell_fee_percent),
+        ExecuteMsg::SetReferalBuyFeePercent {
+            referal_buy_fee_percent,
+        } => set_referal_buy_fee_percent(deps, info, referal_buy_fee_percent),
+        ExecuteMsg::SetReferalSellFeePercent {
+            referal_sell_fee_percent,
+        } => set_referal_sell_fee_percent(deps, info, referal_sell_fee_percent),
         ExecuteMsg::BuyShares {
             shares_subject,
+            referal
         } => {
             if state.trading_is_enabled == false {
                 return Err(ContractError::TradingIsDisabled {});
             }
-            buy_shares(deps, info, shares_subject)
+            buy_shares(deps, info, shares_subject, referal)
         }
         ExecuteMsg::SellShares {
             shares_subject,

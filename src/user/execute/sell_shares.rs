@@ -21,9 +21,10 @@ pub fn sell_shares(
     if shares_supply > Uint128::new(1) {
         let price = get_price(shares_supply - Uint128::new(1));
 
-        let protocol_fee = calculate_fee(price, state.protocol_fee_percent);
-        let subject_fee = calculate_fee(price, state.subject_fee_percent);
-        let total = price - protocol_fee - subject_fee;
+        let protocol_fee = calculate_fee(price, state.protocol_sell_fee_percent);
+        let subject_fee = calculate_fee(price, state.subject_sell_fee_percent);
+        let referal_fee = calculate_fee(price, state.referal_sell_fee_percent);
+        let total = price - protocol_fee - subject_fee - referal_fee;
 
         let balance = SHARES_BALANCE
             .may_load(deps.storage, (&info.sender, &shares_subject))?
