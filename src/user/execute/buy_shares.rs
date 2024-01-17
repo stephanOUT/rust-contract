@@ -57,22 +57,20 @@ pub fn buy_shares(
             |holders: Option<Uint128>| -> StdResult<_> { Ok(Uint128::new(1)) },
         )?;
 
-        let protocol_fee_result = BankMsg::Send {
-            to_address: state.protocol_fee_destination.to_string(),
-            amount: coins(protocol_fee.into(), "inj"),
-        };
+        // let protocol_fee_result = BankMsg::Send {
+        //     to_address: state.protocol_fee_destination.to_string(),
+        //     amount: coins(protocol_fee.into(), "inj"),
+        // };
 
-        let subject_fee_result = BankMsg::Send {
-            to_address: shares_subject.to_string(),
-            amount: coins(subject_fee.into(), "inj"),
-        };
+        // let subject_fee_result = BankMsg::Send {
+        //     to_address: shares_subject.to_string(),
+        //     amount: coins(subject_fee.into(), "inj"),
+        // };
 
-        let referral_fee_result = BankMsg::Send {
-            to_address: referral.to_string(),
-            amount: coins(referral_fee.into(), "inj"),
-        };
-
-        let shares_balance_new = shares_balance + Uint128::new(1);
+        // let referral_fee_result = BankMsg::Send {
+        //     to_address: referral.to_string(),
+        //     amount: coins(referral_fee.into(), "inj"),
+        // };
 
         let response = Response::new()
             .add_event(
@@ -80,15 +78,14 @@ pub fn buy_shares(
                     .add_attribute("sender", info.sender)
                     .add_attribute("shares_subject", shares_subject)
                     .add_attribute("amount", Uint128::new(1))
-                    .add_attribute("shares_balance_new", shares_balance_new)
+                    .add_attribute("shares_balance_new", shares_balance + Uint128::new(1))
                     .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
                     .add_attribute("subject_fees", subject_fee)
                     .add_attribute("referral_fees", referral_fee)
                     .add_attribute("referral", referral)
                     .add_attribute("total", total)
-                    .add_attribute("funds", info.funds[0].amount),
-            )
-            .add_messages([protocol_fee_result, subject_fee_result, referral_fee_result]);
+                    .add_attribute("funds", Uint128::zero()),
+            );
         Ok(response)
     }
     // anyone buying shares

@@ -58,7 +58,7 @@ mod inj_tests {
             contract_state.protocol_fee_destination
         );
 
-        // have user buy a share of user
+        // have user 1 buy a share of user 1
 
         let balance_request = QueryBalanceRequest {
             address: user_1.address(),
@@ -67,7 +67,7 @@ mod inj_tests {
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
         println!(
-            "user balance before transaction: {:?}",
+            "user 1 balance before transaction: {:?}",
             balance_response.balance
         );
 
