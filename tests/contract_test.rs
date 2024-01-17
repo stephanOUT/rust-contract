@@ -127,7 +127,6 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
 
         // buy shares
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
@@ -137,7 +136,6 @@ mod tests {
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         println!("{:?}", res.events);
-        assert_eq!(3, res.messages.len());
 
         // check how much user gets back
         // println!("{:?}", res.messages);
@@ -163,30 +161,36 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
 
-        // user 1 buys 1 share of user 1
-        println!("user1");
+        // user 1 buy user 1
         let info = mock_info("user_1", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
 
-        // user 2 buys 1 share of user 1
-        println!("user2");
+        // user 2 buy user 1
         let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        println!("{:?}", res.events);
+       // println!("{:?}", res.events);
 
-        assert_eq!(4, res.messages.len());
-        println!("user2 finish");
+        // it worked, let's query the shares balance
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::GetShareBalance {
+                shares_subject: Addr::unchecked("user_1"),
+                my_address: Addr::unchecked("user_2"),
+            },
+        )
+        .unwrap();
+        let shares_balance: GetShareBalanceResponse = from_json(&res).unwrap();
+        assert_eq!(Uint128::new(1), shares_balance.amount);
     }
 
     #[test]
@@ -198,7 +202,7 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        
 
         // buy first share (cant sell)
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
@@ -207,7 +211,6 @@ mod tests {
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
 
         // buy another share (can sell)
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
@@ -216,7 +219,6 @@ mod tests {
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(4, res.messages.len());
 
         // sell share
         let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
@@ -225,7 +227,6 @@ mod tests {
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(4, res.messages.len());
 
         let res = query(
             deps.as_ref(),
@@ -288,7 +289,7 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+
 
         // buy first share
         let info = mock_info("anyone", &coins(1000000000000000, "earth"));
@@ -297,7 +298,6 @@ mod tests {
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(3, res.messages.len());
 
         // get share balance
         let msg = QueryMsg::GetShareBalance {

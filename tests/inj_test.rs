@@ -1,9 +1,9 @@
 mod inj_tests {
     use cosmwasm_std::{Addr, Coin, Uint128};
     use injective_std::types::cosmos::bank::v1beta1::QueryBalanceRequest;
-    use injective_test_tube::{Account, Bank, InjectiveTestApp, Module, Wasm};
+    use injective_test_tube::{Account, Bank, InjectiveTestApp, Module, SigningAccount, Wasm};
     use rust_contract::{
-        msg::{ExecuteMsg, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
+        msg::{ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg},
         state::State,
     };
 
@@ -247,5 +247,159 @@ mod inj_tests {
 
         let balance_response = bank.query_balance(&balance_request.into()).unwrap();
         println!("user 2: balance after: {:?}", balance_response.balance);
+    }
+
+    #[test]
+    fn end_to_end() {
+        let app = InjectiveTestApp::new();
+        let admin = &app
+            .init_account(&[Coin::new(1000000000000000000, "inj")])
+            .unwrap();
+        let user_1 = &app
+            .init_account(&[Coin::new(1000000000000000000, "inj")])
+            .unwrap();
+        let user_2 = &app
+            .init_account(&[Coin::new(1000000000000000000, "inj")])
+            .unwrap();
+        let referring_user = &app.init_account(&[]).unwrap();
+
+        let wasm = Wasm::new(&app);
+        let bank = Bank::new(&app);
+        let wasm_byte_code = std::fs::read("./artifacts/rust_contract-aarch64.wasm").unwrap();
+        let code_id = wasm
+            .store_code(&wasm_byte_code, None, admin)
+            .unwrap()
+            .data
+            .code_id;
+
+        let contract_addr = wasm
+            .instantiate(
+                code_id,
+                &InstantiateMsg {},
+                None, // contract admin used for migration, not the same as cw1_whitelist admin
+                Some("label"), // contract label
+                &[],  // funds
+                admin, // signer
+            )
+            .unwrap()
+            .data
+            .address;
+
+        // query contract state to check if contract instantiation works properly
+        let contract_state = wasm
+            .query::<QueryMsg, State>(&contract_addr, &QueryMsg::GetState {})
+            .unwrap();
+
+        println!("user 1 buys a share of user 1");
+        println!(
+            "user 1 balance before transaction: {:?}",
+            get_balance(user_1.address(), &bank)
+        );
+        buy_share(
+            &wasm,
+            &contract_addr,
+            &user_1.address(),
+            &referring_user.address(),
+            user_1,
+            &[],
+        );
+        println!(
+            "user 1 balance after transaction: {:?}",
+            get_balance(user_1.address(), &bank)
+        );
+
+        println!("user 2 buys a share of user 2");
+        println!(
+            "user 2 balance before transaction: {:?}",
+            get_balance(user_2.address(), &bank)
+        );
+        buy_share(
+            &wasm,
+            &contract_addr,
+            &user_2.address(),
+            &referring_user.address(),
+            user_2,
+            &[],
+        );
+        println!(
+            "user 2 balance after transaction: {:?}",
+            get_balance(user_2.address(), &bank)
+        );
+
+        println!("user 2 buys a share of user 1");
+        let user_1_price = get_price(&wasm, &contract_addr, user_1.address(), true, true);
+        println!(
+            "user 1 price: {:?}",
+            user_1_price.to_string()
+        );
+        println!(
+            "user 2 balance before transaction: {:?}",
+            get_balance(user_2.address(), &bank)
+        );
+        buy_share(
+            &wasm,
+            &contract_addr,
+            &user_1.address(),
+            &referring_user.address(),
+            user_2,
+            &[Coin::new(user_1_price.u128(), "inj")],
+        );
+        println!(
+            "user 2 balance after transaction: {:?}",
+            get_balance(user_2.address(), &bank)
+        );
+        println!(
+            "referring user balance: {:?}",
+            get_balance(referring_user.address(), &bank)
+        );
+    }
+
+    fn get_balance(addr: String, bank: &Bank<'_, InjectiveTestApp>) -> String {
+        let balance_request = QueryBalanceRequest {
+            address: addr,
+            denom: "inj".to_string(),
+        };
+        let balance_response = bank.query_balance(&balance_request.into()).unwrap();
+        return balance_response.balance.unwrap().amount;
+    }
+
+    fn buy_share(
+        wasm: &Wasm<'_, InjectiveTestApp>,
+        contract_addr: &String,
+        shares_subject: &String,
+        referring_user: &String,
+        signer: &SigningAccount,
+        funds: &[Coin],
+    ) {
+        wasm.execute::<ExecuteMsg>(
+            &contract_addr,
+            &ExecuteMsg::BuyShares {
+                shares_subject: Addr::unchecked(shares_subject),
+                referral: Addr::unchecked(referring_user),
+            },
+            funds, // empty funds when buying first share
+            signer,
+        )
+        .unwrap();
+    }
+
+    fn get_price(
+        wasm: &Wasm<'_, InjectiveTestApp>,
+        contract_addr: &String,
+        shares_subject: String,
+        with_fees: bool,
+        is_buy: bool,
+    ) -> Uint128 {
+        let price_response = wasm
+            .query::<QueryMsg, GetPriceResponse>(
+                &contract_addr,
+                &QueryMsg::GetPrice {
+                    shares_subject: Addr::unchecked(&shares_subject),
+                    with_fees,
+                    is_buy,
+                },
+            )
+            .unwrap();
+        return price_response.price;
     }
 }

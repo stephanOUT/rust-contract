@@ -6,6 +6,17 @@ use crate::{
 use cosmwasm_std::{coins, Addr, BankMsg, Event, StdError, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
+fn increment_share_holders(deps: DepsMut, shares_subject: Addr) -> Result<(), ContractError> {
+    SHARES_HOLDERS.update(
+        deps.storage,
+        &shares_subject,
+        |holders: Option<Uint128>| -> StdResult<_> {
+            Ok(holders.unwrap_or_default() + Uint128::new(1))
+        },
+    )?;
+    Ok(())
+}
+
 pub fn buy_shares(
     deps: DepsMut,
     info: MessageInfo,
@@ -50,42 +61,21 @@ pub fn buy_shares(
                 Ok(supply.unwrap_or_default() + Uint128::new(1))
             },
         )?;
+        increment_share_holders(deps, shares_subject.clone())?;
 
-        SHARES_HOLDERS.update(
-            deps.storage,
-            &shares_subject,
-            |holders: Option<Uint128>| -> StdResult<_> { Ok(Uint128::new(1)) },
-        )?;
-
-        // let protocol_fee_result = BankMsg::Send {
-        //     to_address: state.protocol_fee_destination.to_string(),
-        //     amount: coins(protocol_fee.into(), "inj"),
-        // };
-
-        // let subject_fee_result = BankMsg::Send {
-        //     to_address: shares_subject.to_string(),
-        //     amount: coins(subject_fee.into(), "inj"),
-        // };
-
-        // let referral_fee_result = BankMsg::Send {
-        //     to_address: referral.to_string(),
-        //     amount: coins(referral_fee.into(), "inj"),
-        // };
-
-        let response = Response::new()
-            .add_event(
-                Event::new("buy_shares")
-                    .add_attribute("sender", info.sender)
-                    .add_attribute("shares_subject", shares_subject)
-                    .add_attribute("amount", Uint128::new(1))
-                    .add_attribute("shares_balance_new", shares_balance + Uint128::new(1))
-                    .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
-                    .add_attribute("subject_fees", subject_fee)
-                    .add_attribute("referral_fees", referral_fee)
-                    .add_attribute("referral", referral)
-                    .add_attribute("total", total)
-                    .add_attribute("funds", Uint128::zero()),
-            );
+        let response = Response::new().add_event(
+            Event::new("buy_shares")
+                .add_attribute("sender", info.sender)
+                .add_attribute("shares_subject", shares_subject)
+                .add_attribute("amount", Uint128::new(1))
+                .add_attribute("shares_balance_new", shares_balance + Uint128::new(1))
+                .add_attribute("shares_supply_new", shares_supply + Uint128::new(1))
+                .add_attribute("subject_fees", subject_fee)
+                .add_attribute("referral_fees", referral_fee)
+                .add_attribute("referral", referral)
+                .add_attribute("total", total)
+                .add_attribute("funds", Uint128::zero()),
+        );
         Ok(response)
     }
     // anyone buying shares
@@ -109,13 +99,7 @@ pub fn buy_shares(
 
         // If is first buy, add as a holder
         if shares_balance.is_zero() {
-            SHARES_HOLDERS.update(
-                deps.storage,
-                &shares_subject,
-                |holders: Option<Uint128>| -> StdResult<_> {
-                    Ok(holders.unwrap_or_default() + Uint128::new(1))
-                },
-            )?;
+            increment_share_holders(deps, shares_subject.clone())?;
         }
 
         let protocol_fee_result = BankMsg::Send {
