@@ -77,7 +77,7 @@ mod inj_tests {
                 shares_subject: Addr::unchecked(user_1.address()),
                 referral: Addr::unchecked(user_2.address()),
             },
-            &[], // empty funds when buying first share
+            &[Coin::new(100000000000000000, "inj")],
             user_1,
         )
         .unwrap();
@@ -179,7 +179,7 @@ mod inj_tests {
                 shares_subject: Addr::unchecked(user_1.address()),
                 referral: Addr::unchecked(user_2.address()),
             },
-            &[], // empty funds when buying first share
+            &[Coin::new(100000000000000000, "inj")],
             user_1,
         )
         .unwrap();
@@ -207,7 +207,8 @@ mod inj_tests {
                 shares_subject: Addr::unchecked(user_2.address()),
                 referral: Addr::unchecked(user_1.address()),
             },
-            &[], // empty funds when buying first share
+            &[Coin::new(100000000000000000, "inj")],
+
             user_2,
         )
         .unwrap();
@@ -301,7 +302,7 @@ mod inj_tests {
             &user_1.address(),
             &referring_user.address(),
             user_1,
-            &[],
+            &[Coin::new(100000000000000000, "inj")],
         );
         println!(
             "user 1 balance after transaction: {:?}",
@@ -319,7 +320,7 @@ mod inj_tests {
             &user_2.address(),
             &referring_user.address(),
             user_2,
-            &[],
+            &[Coin::new(100000000000000000, "inj")],
         );
         println!(
             "user 2 balance after transaction: {:?}",
