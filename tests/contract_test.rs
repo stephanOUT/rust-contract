@@ -124,12 +124,12 @@ mod tests {
         let mut deps = mock_dependencies();
         let shares_to_buy = Uint128::new(1);
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000000000000000000, "earth"));
         let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // buy shares
-        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -292,7 +292,7 @@ mod tests {
 
 
         // buy first share
-        let info = mock_info("anyone", &coins(1000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
