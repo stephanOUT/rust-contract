@@ -13,7 +13,7 @@ pub fn sell_shares(
     referral: Addr,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
-    let shares_supply = SHARES_SUPPLY
+    let shares_supply = Uint128::new(1) + SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
     let shares_balance = SHARES_BALANCE
@@ -73,33 +73,55 @@ pub fn sell_shares(
                 amount: coins(subject_fee.into(), "inj"),
             };
 
-            let referral_fee_result = BankMsg::Send {
-                to_address: referral.to_string(),
-                amount: coins(referral_fee.into(), "inj"),
-            };
+            if referral_fee > Uint128::zero() {
+                let referral_fee_result = BankMsg::Send {
+                    to_address: referral.to_string(),
+                    amount: coins(referral_fee.into(), "inj"),
+                };
 
-            let response = Response::new()
-                .add_event(
-                    Event::new("sell_shares")
-                        .add_attribute("sender", info.sender)
-                        .add_attribute("shares_subject", shares_subject)
-                        .add_attribute("amount", Uint128::new(1))
-                        .add_attribute("shares_balance_new", shares_balance - Uint128::new(1))
-                        .add_attribute("shares_supply_new", shares_supply - Uint128::new(1))
-                        .add_attribute("subject_fees", subject_fee)
-                        .add_attribute("referral_fees", referral_fee)
-                        .add_attribute("referral", referral)
-                        .add_attribute("total", total)
-                        .add_attribute("funds", info.funds[0].amount),
-                )
-                .add_messages([
-                    funds_result,
-                    protocol_fee_result,
-                    subject_fee_result,
-                    referral_fee_result,
-                ]);
+                let response = Response::new()
+                    .add_event(
+                        Event::new("sell_shares")
+                            .add_attribute("sender", info.sender)
+                            .add_attribute("shares_subject", shares_subject)
+                            .add_attribute("amount", Uint128::new(1))
+                            .add_attribute("shares_balance_new", shares_balance - Uint128::new(1))
+                            .add_attribute("shares_supply_new", shares_supply - Uint128::new(1))
+                            .add_attribute("subject_fees", subject_fee)
+                            .add_attribute("referral_fees", referral_fee)
+                            .add_attribute("referral", referral)
+                            .add_attribute("total", total),
+                    )
+                    .add_messages([
+                        funds_result,
+                        protocol_fee_result,
+                        subject_fee_result,
+                        referral_fee_result,
+                    ]);
 
-            Ok(response)
+               return Ok(response);
+            } else {
+                let response = Response::new()
+                    .add_event(
+                        Event::new("sell_shares")
+                            .add_attribute("sender", info.sender)
+                            .add_attribute("shares_subject", shares_subject)
+                            .add_attribute("amount", Uint128::new(1))
+                            .add_attribute("shares_balance_new", shares_balance - Uint128::new(1))
+                            .add_attribute("shares_supply_new", shares_supply - Uint128::new(1))
+                            .add_attribute("subject_fees", subject_fee)
+                            .add_attribute("referral_fees", Uint128::zero())
+                            .add_attribute("referral", referral)
+                            .add_attribute("total", total),
+                    )
+                    .add_messages([
+                        funds_result,
+                        protocol_fee_result,
+                        subject_fee_result,
+                    ]);
+
+                return Ok(response);
+            }
         } else {
             Err(ContractError::Std(StdError::generic_err(
                 "Insufficient shares",

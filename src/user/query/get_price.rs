@@ -13,7 +13,7 @@ pub fn get_price_query(
     is_buy: bool,
 ) -> StdResult<GetPriceResponse> {
     let state = STATE.load(deps.storage)?;
-    let supply = SHARES_SUPPLY
+    let supply = Uint128::new(1) + SHARES_SUPPLY
         .may_load(deps.storage, &shares_subject)?
         .unwrap_or_default();
 

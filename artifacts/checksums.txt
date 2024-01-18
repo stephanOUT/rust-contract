@@ -1,1 +1,2 @@
 c4a2d74389a961eefefc50b4fcb4d741deec93c5d7a79f8198382591d3fdffdc  rust_contract-aarch64.wasm
+568b74ff2937180a75d572891b9b07b42da6fd08c1225da6d75eb77dcf4f1ac6  rust_contract.wasm
