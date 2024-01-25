@@ -12,11 +12,10 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = InstantiateMsg {};
+        let info = mock_info("creator", &coins(1000, "inj"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
@@ -42,14 +41,13 @@ mod tests {
     fn set_fee_destination() {
         let mut deps = mock_dependencies();
 
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = InstantiateMsg {};
+        let info = mock_info("creator", &coins(1000, "inj"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
         assert_eq!(0, res.messages.len());
 
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = ExecuteMsg::SetFeeDestination {
             fee_destination: Addr::unchecked("fee_destination"),
         };
@@ -71,14 +69,14 @@ mod tests {
     fn set_protocol_fee_percent() {
         let mut deps = mock_dependencies();
 
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
         assert_eq!(0, res.messages.len());
 
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = ExecuteMsg::SetProtocolBuyFeePercent {
             protocol_buy_fee_percent: Uint128::new(10),
         };
@@ -97,14 +95,14 @@ mod tests {
     fn set_subject_fee_percent() {
         let mut deps = mock_dependencies();
 
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
         assert_eq!(0, res.messages.len());
 
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = ExecuteMsg::SetSubjectBuyFeePercent {
             subject_buy_fee_percent: Uint128::new(10),
         };
@@ -124,12 +122,11 @@ mod tests {
         let mut deps = mock_dependencies();
         let shares_to_buy = Uint128::new(1);
         // init
-        let info = mock_info("creator", &coins(1000000000000000000, "earth"));
-        let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let info = mock_info("creator", &coins(1000000000000000000, "inj"));
+        instantiate(deps.as_mut(), mock_env(), info).unwrap();
 
         // buy shares
-        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -158,12 +155,12 @@ mod tests {
     fn buy_shares_of_someone_else() {
         // init
         let mut deps = mock_dependencies();
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
 
         // user 1 buy user 1
-        let info = mock_info("user_1", &coins(1000000000000000000, "earth"));
+        let info = mock_info("user_1", &coins(1000000000000000000, "inj"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
             referral: Addr::unchecked("anyone"),
@@ -171,7 +168,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // user 2 buy user 1
-        let info = mock_info("user_2", &coins(1000000000000000000, "earth"));
+        let info = mock_info("user_2", &coins(1000000000000000000, "inj"));
         let msg: ExecuteMsg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("user_1"),
             referral: Addr::unchecked("anyone"),
@@ -199,13 +196,13 @@ mod tests {
         let shares_to_buy = Uint128::new(2);
         let shares_to_sell = Uint128::new(1);
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
         
 
         // buy first share (cant sell)
-        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -213,7 +210,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // buy another share (can sell)
-        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -221,7 +218,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // sell share
-        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
         let msg = ExecuteMsg::SellShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -247,7 +244,7 @@ mod tests {
     //     let mut deps = mock_dependencies();
 
     //     // init
-    //     let info = mock_info("creator", &coins(1000, "earth"));
+    //     let info = mock_info("creator", &coins(1000, "inj"));
     //     let msg = InstantiateMsg {};
     //     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
     //     assert_eq!(0, res.messages.len());
@@ -267,7 +264,7 @@ mod tests {
     //     let mut deps = mock_dependencies();
 
     //     // init
-    //     let info = mock_info("creator", &coins(1000, "earth"));
+    //     let info = mock_info("creator", &coins(1000, "inj"));
     //     let msg = InstantiateMsg {};
     //     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
     //     assert_eq!(0, res.messages.len());
@@ -286,13 +283,13 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
 
 
         // buy first share
-        let info = mock_info("anyone", &coins(1000000000000000000, "earth"));
+        let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
         let msg = ExecuteMsg::BuyShares {
             shares_subject: Addr::unchecked("anyone"),
             referral: Addr::unchecked("anyone"),
@@ -314,13 +311,13 @@ mod tests {
     //     let mut deps = mock_dependencies();
 
     //     // init
-    //     let info = mock_info("creator", &coins(1000, "earth"));
+    //     let info = mock_info("creator", &coins(1000, "inj"));
     //     let msg = InstantiateMsg {};
     //     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
     //     assert_eq!(0, res.messages.len());
 
     //     // set protocol fee percent
-    //     let info = mock_info("creator", &coins(1000, "earth"));
+    //     let info = mock_info("creator", &coins(1000, "inj"));
     //     let msg = ExecuteMsg::SetProtocolFeePercent {
     //         protocol_fee_percent: Uint128::new(10),
     //     };
@@ -328,7 +325,7 @@ mod tests {
     //     assert_eq!(0, res.messages.len());
 
     //     // set subject fee percent
-    //     let info = mock_info("creator", &coins(1000, "earth"));
+    //     let info = mock_info("creator", &coins(1000, "inj"));
     //     let msg = ExecuteMsg::SetSubjectFeePercent {
     //         subject_fee_percent: Uint128::new(5),
     //     };
