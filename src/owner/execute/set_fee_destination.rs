@@ -7,12 +7,13 @@ pub fn set_fee_destination(
     info: MessageInfo,
     fee_destination: Addr,
 ) -> Result<Response, ContractError> {
-    let destination = fee_destination.to_string();
+    let validated_address = deps.api.addr_validate(&fee_destination.to_string())?;
+    let destination = validated_address.to_string();
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        state.protocol_fee_destination = fee_destination;
+        state.protocol_fee_destination = validated_address;
         Ok(state)
     })?;
     Ok(Response::new()
