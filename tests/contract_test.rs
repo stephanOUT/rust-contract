@@ -7,7 +7,7 @@ mod tests {
         ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, InstantiateMsg, QueryMsg,
     };
     use rust_contract::state::State;
-
+    const INSTANTIATE_MSG: InstantiateMsg = InstantiateMsg {};
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
@@ -15,7 +15,7 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "inj"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
@@ -44,7 +44,7 @@ mod tests {
         let info = mock_info("creator", &coins(1000, "inj"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("creator", &coins(1000, "inj"));
@@ -73,7 +73,7 @@ mod tests {
         let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("creator", &coins(1000, "inj"));
@@ -99,7 +99,7 @@ mod tests {
         let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
         assert_eq!(0, res.messages.len());
 
         let info = mock_info("creator", &coins(1000, "inj"));
@@ -123,7 +123,7 @@ mod tests {
         let shares_to_buy = Uint128::new(1);
         // init
         let info = mock_info("creator", &coins(1000000000000000000, "inj"));
-        instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
 
         // buy shares
         let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
@@ -157,7 +157,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
 
         // user 1 buy user 1
         let info = mock_info("user_1", &coins(1000000000000000000, "inj"));
@@ -198,7 +198,7 @@ mod tests {
         // init
         let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
         
 
         // buy first share (cant sell)
@@ -285,7 +285,7 @@ mod tests {
         // init
         let info = mock_info("creator", &coins(1000, "inj"));
         let msg = InstantiateMsg {};
-        let res = instantiate(deps.as_mut(), mock_env(), info).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
 
 
         // buy first share
