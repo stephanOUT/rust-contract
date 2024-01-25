@@ -42,11 +42,7 @@ pub fn buy_shares(
             (&info.sender, &validated_shares_subject_address),
         )?
         .unwrap_or_default();
-
-    let shares_holders = SHARES_HOLDERS
-        .may_load(deps.storage, &validated_shares_subject_address)?
-        .unwrap_or_default();
-
+    
     let price = get_price(shares_supply);
 
     let protocol_fee = calculate_fee(price, state.protocol_buy_fee_percent);

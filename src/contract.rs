@@ -2,7 +2,7 @@
 use crate::{
     msg::{
         ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse,
-        InstantiateMsg, QueryMsg,
+        QueryMsg,
     },
     owner::execute::{
         set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent,
@@ -31,7 +31,6 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
