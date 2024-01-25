@@ -29,4 +29,7 @@ pub enum ContractError {
 
     #[error("Invalid token sent")]
     InvalidTokenSentPayment {},
+
+    #[error("The tradingstate is the same")]
+    TradingStateTheSame {},
 }

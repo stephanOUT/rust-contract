@@ -7,6 +7,16 @@ pub fn toggle_trading(
     info: MessageInfo,
     is_enabled: bool,
 ) -> Result<Response, ContractError> {
+    let state: State = STATE.load(deps.storage)?;
+
+    if state.trading_is_enabled == is_enabled {
+        return Err(ContractError::TradingStateTheSame {});
+    }
+
+    let current_trading_enabled = Uint128::new(1) + SHARES_SUPPLY
+        .may_load(deps.storage, &shares_subject)?
+        .unwrap_or_default();
+    
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
