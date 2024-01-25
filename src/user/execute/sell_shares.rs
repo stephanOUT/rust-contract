@@ -8,6 +8,9 @@ use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
 const OUT_DENOM: &str = "inj";
 
+const BASE_SUPPLY: Uint128 = Uint128::new(1);
+const TX_AMOUNT_SHARES: Uint128 = Uint128::new(1);
+
 pub fn sell_shares(
     deps: DepsMut,
     info: MessageInfo,
@@ -17,7 +20,7 @@ pub fn sell_shares(
     let validated_referral_address = deps.api.addr_validate(&referral.to_string())?;
     let validated_shares_subject_address = deps.api.addr_validate(&shares_subject.to_string())?;
     let state = STATE.load(deps.storage)?;
-    let shares_supply = Uint128::new(1)
+    let shares_supply = BASE_SUPPLY
         + SHARES_SUPPLY
             .may_load(deps.storage, &validated_shares_subject_address)?
             .unwrap_or_default();
@@ -27,8 +30,8 @@ pub fn sell_shares(
             (&info.sender, &validated_shares_subject_address),
         )?
         .unwrap_or_default();
-    if shares_supply > Uint128::new(1) {
-        let price = get_price(shares_supply - Uint128::new(1));
+    if shares_supply > BASE_SUPPLY {
+        let price = get_price(shares_supply - TX_AMOUNT_SHARES);
 
         let protocol_fee = calculate_fee(price, state.protocol_sell_fee_percent);
         let subject_fee = calculate_fee(price, state.subject_sell_fee_percent);
@@ -42,12 +45,12 @@ pub fn sell_shares(
             )?
             .unwrap_or_default();
 
-        if balance >= Uint128::new(1) {
+        if balance >= BASE_SUPPLY {
             SHARES_BALANCE.update(
                 deps.storage,
                 (&info.sender, &validated_shares_subject_address),
                 |balance: Option<Uint128>| -> StdResult<_> {
-                    Ok(balance.unwrap_or_default() - Uint128::new(1))
+                    Ok(balance.unwrap_or_default() - TX_AMOUNT_SHARES)
                 },
             )?;
 
@@ -55,16 +58,16 @@ pub fn sell_shares(
                 deps.storage,
                 &validated_shares_subject_address,
                 |supply: Option<Uint128>| -> StdResult<_> {
-                    Ok(supply.unwrap_or_default() - Uint128::new(1))
+                    Ok(supply.unwrap_or_default() - TX_AMOUNT_SHARES)
                 },
             )?;
 
-            if balance == Uint128::new(1) {
+            if balance == BASE_SUPPLY {
                 SHARES_HOLDERS.update(
                     deps.storage,
                     &validated_shares_subject_address,
                     |holders: Option<Uint128>| -> StdResult<_> {
-                        Ok(holders.unwrap_or_default() - Uint128::new(1))
+                        Ok(holders.unwrap_or_default() - TX_AMOUNT_SHARES)
                     },
                 )?;
             }
@@ -107,9 +110,9 @@ pub fn sell_shares(
                     Event::new("sell_shares")
                         .add_attribute("sender", info.sender)
                         .add_attribute("shares_subject", validated_shares_subject_address)
-                        .add_attribute("amount", Uint128::new(1))
-                        .add_attribute("shares_balance_new", shares_balance - Uint128::new(1))
-                        .add_attribute("shares_supply_new", shares_supply - Uint128::new(1))
+                        .add_attribute("amount", TX_AMOUNT_SHARES)
+                        .add_attribute("shares_balance_new", shares_balance - TX_AMOUNT_SHARES)
+                        .add_attribute("shares_supply_new", shares_supply - TX_AMOUNT_SHARES)
                         .add_attribute("subject_fees", subject_fee)
                         .add_attribute("referral_fees", referral_fee)
                         .add_attribute("referral", validated_referral_address)

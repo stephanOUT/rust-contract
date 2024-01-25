@@ -53,12 +53,12 @@ pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Respon
         .add_event(Event::new("contract_instantiated"))
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
-        .add_attribute("subject_buy_fee_percent", Uint128::new(3000))
-        .add_attribute("subject_sell_fee_percent", Uint128::new(3000))
-        .add_attribute("protocol_buy_fee_percent", Uint128::new(2500))
-        .add_attribute("protocol_sell_fee_percent", Uint128::new(3000))
-        .add_attribute("referral_buy_fee_percent", Uint128::new(500))
-        .add_attribute("referral_sell_fee_percent", Uint128::new(0)))
+        .add_attribute("subject_buy_fee_percent", SUBJECT_BUY_FEE_PERCENT)
+        .add_attribute("subject_sell_fee_percent", SUBJECT_SELL_FEE_PERCENT)
+        .add_attribute("protocol_buy_fee_percent", PROTOCOL_BUY_FEE_PERCENT)
+        .add_attribute("protocol_sell_fee_percent", PROTOCOL_SELL_FEE_PERCENT)
+        .add_attribute("referral_buy_fee_percent", REFERRAL_BUY_FEE_PERCENT)
+        .add_attribute("referral_sell_fee_percent", REFERRAL_SELL_FEE_PERCENT))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

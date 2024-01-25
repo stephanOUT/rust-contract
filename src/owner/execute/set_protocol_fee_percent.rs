@@ -35,9 +35,9 @@ pub fn set_protocol_sell_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(5000) {
+        if fee_percent > MAX_FEE_PERCENT {
             return Err(ContractError::Std(StdError::generic_err(
-                "Cannot set fees higher than 5%",
+                "Cannot set fees higher than MAX_FEE_PERCENT",
             )));
         }
         state.protocol_sell_fee_percent = fee_percent;

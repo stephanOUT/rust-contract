@@ -9,6 +9,8 @@ use cw_utils::must_pay;
 
 const OUT_DENOM: &str = "inj";
 
+const BASE_SUPPLY: Uint128 = Uint128::new(1);
+
 fn increment_share_holders(deps: DepsMut, shares_subject: Addr) -> Result<(), ContractError> {
     SHARES_HOLDERS.update(
         deps.storage,
@@ -31,7 +33,7 @@ pub fn buy_shares(
 
     let state = STATE.load(deps.storage)?;
 
-    let shares_supply = Uint128::new(1)
+    let shares_supply = BASE_SUPPLY
         + SHARES_SUPPLY
             .may_load(deps.storage, &validated_shares_subject_address)?
             .unwrap_or_default();
