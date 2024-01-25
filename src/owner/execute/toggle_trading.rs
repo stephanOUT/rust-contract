@@ -1,6 +1,7 @@
-use cosmwasm_std::{DepsMut, Event, MessageInfo, Response};
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128};
 
-use crate::{state::STATE, ContractError};
+use crate::{state::{State, SHARES_SUPPLY, STATE}, ContractError};
+
 
 pub fn toggle_trading(
     deps: DepsMut,
@@ -12,10 +13,6 @@ pub fn toggle_trading(
     if state.trading_is_enabled == is_enabled {
         return Err(ContractError::TradingStateTheSame {});
     }
-
-    let current_trading_enabled = Uint128::new(1) + SHARES_SUPPLY
-        .may_load(deps.storage, &shares_subject)?
-        .unwrap_or_default();
     
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         if info.sender != state.owner {
