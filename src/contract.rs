@@ -1,8 +1,7 @@
 #[cfg(not(feature = "library"))]
 use crate::{
     msg::{
-        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse,
-        QueryMsg,
+        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse, QueryMsg,
     },
     owner::execute::{
         set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent,
@@ -26,20 +25,23 @@ use cw2::set_contract_version;
 const CONTRACT_NAME: &str = "crates.io:my-first-contract";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const SUBJECT_BUY_FEE_PERCENT: Uint128 = Uint128::new(3000); // 3.000%
+const SUBJECT_SELL_FEE_PERCENT: Uint128 = Uint128::new(3000); // 3.000%
+const PROTOCOL_BUY_FEE_PERCENT: Uint128 = Uint128::new(2500); // 3.000%
+const PROTOCOL_SELL_FEE_PERCENT: Uint128 = Uint128::new(3000); // 3.000%
+const REFERRAL_BUY_FEE_PERCENT: Uint128 = Uint128::new(500); // 0.500%
+const REFERRAL_SELL_FEE_PERCENT: Uint128 = Uint128::new(0); // 0.000%
+
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
+pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
-        subject_buy_fee_percent: Uint128::new(3000), // 3.000%
-        subject_sell_fee_percent: Uint128::new(3000), // 3.000%
-        protocol_buy_fee_percent: Uint128::new(2500), // 2.500%
-        protocol_sell_fee_percent: Uint128::new(3000), // 3.000%
-        referral_buy_fee_percent: Uint128::new(500), // 0.500%
-        referral_sell_fee_percent: Uint128::new(0),  // 0.000%
+        subject_buy_fee_percent: SUBJECT_BUY_FEE_PERCENT,
+        subject_sell_fee_percent: SUBJECT_SELL_FEE_PERCENT,
+        protocol_buy_fee_percent: PROTOCOL_BUY_FEE_PERCENT,
+        protocol_sell_fee_percent: PROTOCOL_SELL_FEE_PERCENT,
+        referral_buy_fee_percent: REFERRAL_BUY_FEE_PERCENT, 
+        referral_sell_fee_percent: REFERRAL_SELL_FEE_PERCENT,
         protocol_fee_destination: info.sender.clone(), // change later
         trading_is_enabled: true,
     };
