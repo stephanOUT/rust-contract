@@ -70,7 +70,6 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let info = mock_info("creator", &coins(1000, "inj"));
-        let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
@@ -96,7 +95,6 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let info = mock_info("creator", &coins(1000, "inj"));
-        let msg = InstantiateMsg {};
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
@@ -156,7 +154,6 @@ mod tests {
         // init
         let mut deps = mock_dependencies();
         let info = mock_info("creator", &coins(1000, "inj"));
-        let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
 
         // user 1 buy user 1
@@ -174,7 +171,7 @@ mod tests {
             referral: Addr::unchecked("anyone"),
         };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-       // println!("{:?}", res.events);
+        // println!("{:?}", res.events);
 
         // it worked, let's query the shares balance
         let res = query(
@@ -197,9 +194,7 @@ mod tests {
         let shares_to_sell = Uint128::new(1);
         // init
         let info = mock_info("creator", &coins(1000, "inj"));
-        let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
-        
 
         // buy first share (cant sell)
         let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
@@ -284,9 +279,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "inj"));
-        let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
-
 
         // buy first share
         let info = mock_info("anyone", &coins(1000000000000000000, "inj"));
@@ -304,6 +297,24 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), msg).unwrap();
         let get_share_balance_response: GetShareBalanceResponse = from_json(&res).unwrap();
         assert_eq!(Uint128::new(1), get_share_balance_response.amount);
+    }
+
+    #[test]
+    fn check_denom() {
+        let mut deps = mock_dependencies();
+
+        // init
+        let info = mock_info("creator", &coins(1000, "inj"));
+        let res = instantiate(deps.as_mut(), mock_env(), info, INSTANTIATE_MSG).unwrap();
+
+        // buy first share
+        let info = mock_info("anyone", &coins(1000000000000000000, "usdt"));
+        let msg = ExecuteMsg::BuyShares {
+            shares_subject: Addr::unchecked("anyone"),
+            referral: Addr::unchecked("anyone"),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
     }
 
     // #[test]
