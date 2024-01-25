@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use crate::{
     msg::{
-        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse, QueryMsg,
+        ExecuteMsg, GetPriceResponse, GetShareBalanceResponse, GetSubjectHoldersResponse, InstantiateMsg, QueryMsg,
     },
     owner::execute::{
         set_fee_destination, set_protocol_buy_fee_percent, set_protocol_sell_fee_percent,
@@ -33,7 +33,7 @@ const REFERRAL_BUY_FEE_PERCENT: Uint128 = Uint128::new(500); // 0.500%
 const REFERRAL_SELL_FEE_PERCENT: Uint128 = Uint128::new(0); // 0.000%
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo) -> Result<Response, ContractError> {
+pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg,) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
         subject_buy_fee_percent: SUBJECT_BUY_FEE_PERCENT,
