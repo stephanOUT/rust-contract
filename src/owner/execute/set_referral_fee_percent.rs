@@ -2,6 +2,9 @@ use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128, StdError };
 
 use crate::{state::STATE, ContractError};
 
+const MAX_FEE_PERCENT: Uint128 = Uint128::new(2500);
+
+
 pub fn set_referral_buy_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
@@ -11,9 +14,9 @@ pub fn set_referral_buy_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(2500) {
+        if fee_percent > MAX_FEE_PERCENT {
             return Err(ContractError::Std(StdError::generic_err(
-                "Cannot set fees higher than 2.5%",
+                "Cannot set fees higher than MAX_FEE_PERCENT",
             )));
         }
         state.referral_buy_fee_percent = fee_percent;
@@ -32,7 +35,7 @@ pub fn set_referral_sell_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(2500) {
+        if fee_percent > MAX_FEE_PERCENT {
             return Err(ContractError::Std(StdError::generic_err(
                 "Cannot set fees higher than 2.5%",
             )));

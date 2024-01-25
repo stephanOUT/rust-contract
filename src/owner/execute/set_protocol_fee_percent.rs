@@ -2,6 +2,8 @@ use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, StdError, Uint128};
 
 use crate::{state::STATE, ContractError};
 
+const MAX_FEE_PERCENT: Uint128 = Uint128::new(5000);
+
 pub fn set_protocol_buy_fee_percent(
     deps: DepsMut,
     info: MessageInfo,
@@ -11,9 +13,9 @@ pub fn set_protocol_buy_fee_percent(
         if info.sender != state.owner {
             return Err(ContractError::Unauthorized {});
         }
-        if fee_percent > Uint128::new(5000) {
+        if fee_percent > MAX_FEE_PERCENT {
             return Err(ContractError::Std(StdError::generic_err(
-                "Cannot set fees higher than 5%",
+                "Cannot set fees higher than MAX_FEE_PERCENT",
             )));
         }
         state.protocol_buy_fee_percent = fee_percent;

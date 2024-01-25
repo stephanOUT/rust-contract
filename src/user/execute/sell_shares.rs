@@ -6,6 +6,8 @@ use crate::{
 use cosmwasm_std::{coins, Addr, BankMsg, Event, StdError, StdResult, Uint128};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 
+const OUT_DENOM: &str = "inj";
+
 pub fn sell_shares(
     deps: DepsMut,
     info: MessageInfo,
@@ -72,7 +74,7 @@ pub fn sell_shares(
             if total > Uint128::zero() {
                 let funds_result = BankMsg::Send {
                     to_address: info.sender.to_string(),
-                    amount: coins(total.into(), "inj"),
+                    amount: coins(total.into(), OUT_DENOM),
                 };
                 msgs.push(funds_result);
             }
@@ -80,7 +82,7 @@ pub fn sell_shares(
             if protocol_fee > Uint128::zero() {
                 let protocol_fee_result = BankMsg::Send {
                     to_address: state.protocol_fee_destination.to_string(),
-                    amount: coins(protocol_fee.into(), "inj"),
+                    amount: coins(protocol_fee.into(), OUT_DENOM),
                 };
                 msgs.push(protocol_fee_result);
             }
@@ -88,7 +90,7 @@ pub fn sell_shares(
             if subject_fee > Uint128::zero() {
                 let subject_fee_result = BankMsg::Send {
                     to_address: validated_shares_subject_address.to_string(),
-                    amount: coins(subject_fee.into(), "inj"),
+                    amount: coins(subject_fee.into(), OUT_DENOM),
                 };
                 msgs.push(subject_fee_result);
             }
@@ -96,7 +98,7 @@ pub fn sell_shares(
             if referral_fee > Uint128::zero() {
                 let referral_fee_result = BankMsg::Send {
                     to_address: validated_referral_address.to_string(),
-                    amount: coins(referral_fee.into(), "inj"),
+                    amount: coins(referral_fee.into(), OUT_DENOM),
                 };
                 msgs.push(referral_fee_result);
             }
