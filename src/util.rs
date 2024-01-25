@@ -2,8 +2,10 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, Uint128};
 
+const FEE_SCALE: Uint128 = Uint128::new(100000);
+
 pub fn calculate_fee(price: Uint128, fee_percent: Uint128) -> Uint128 {
-    return price * fee_percent / Uint128::new(100000);
+    return price * fee_percent / FEE_SCALE;
 }
 
 pub fn get_price(supply: Uint128) -> Uint128 {
