@@ -22,3 +22,6 @@ cw-utils = "1.0.3"
 injective-test-tube = "1.1.6"
 injective-std = "0.1.5"
 cw-multi-test = "0.20.0"
+
+[profile.release]
+overflow-checks = true
