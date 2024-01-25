@@ -1864,6 +1864,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-utils",
  "cw2",
  "injective-std",
  "injective-test-tube",

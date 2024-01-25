@@ -26,4 +26,7 @@ pub enum ContractError {
 
     #[error("Insufficient payment")]
     InsufficientPayment {},
+
+    #[error("Invalid token sent")]
+    InvalidTokenSentPayment {},
 }

@@ -3,8 +3,11 @@ use crate::{
     util::{calculate_fee, get_price},
     ContractError,
 };
-use cosmwasm_std::{coins, Addr, BankMsg, Event, StdError, StdResult, Uint128};
+use cosmwasm_std::{coins, Addr, BankMsg, Event, StdResult, Uint128, Coin};
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
+use cw_utils::must_pay;
+
+const OUT_DENOM: &str = "inj";
 
 fn increment_share_holders(deps: DepsMut, shares_subject: Addr) -> Result<(), ContractError> {
     SHARES_HOLDERS.update(
@@ -44,6 +47,7 @@ pub fn buy_shares(
     let referral_fee = calculate_fee(price, state.referral_buy_fee_percent);
     let total = price + protocol_fee + subject_fee + referral_fee;
 
+        must_pay(&info, OUT_DENOM).map_err(|_| ContractError::InvalidTokenSentPayment {})?;
         assert!(info.funds[0].amount >= total, "Insufficient payment");
         SHARES_BALANCE.update(
             deps.storage,
@@ -68,16 +72,16 @@ pub fn buy_shares(
 
         let protocol_fee_result = BankMsg::Send {
             to_address: state.protocol_fee_destination.to_string(),
-            amount: coins(protocol_fee.into(), "inj"),
+            amount: coins(protocol_fee.into(), OUT_DENOM),
         };
 
         let subject_fee_result = BankMsg::Send {
             to_address: shares_subject.to_string(),
-            amount: coins(subject_fee.into(), "inj"),
+            amount: coins(subject_fee.into(), OUT_DENOM),
         };
         let referral_fee_result = BankMsg::Send {
             to_address: referral.to_string(),
-            amount: coins(referral_fee.into(), "inj"),
+            amount: coins(referral_fee.into(), OUT_DENOM),
         };
 
         let shares_balance_new: Uint128 = shares_balance + Uint128::new(1);
@@ -86,7 +90,7 @@ pub fn buy_shares(
         if return_payment > Uint128::zero() {
             let return_payment_result = BankMsg::Send {
                 to_address: info.sender.to_string(),
-                amount: coins(return_payment.into(), "inj"),
+                amount: coins(return_payment.into(), OUT_DENOM),
             };
             let response = Response::new()
                 .add_event(

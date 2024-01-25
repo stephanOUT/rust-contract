@@ -16,6 +16,7 @@ schemars = "0.8.16"
 serde = "1.0.195"
 cosmwasm-schema = "1.5.1"
 cw-storage-plus = "1.2.0"
+cw-utils = "1.0.3"
 
 [dev-dependencies]
 injective-test-tube = "1.1.6"
