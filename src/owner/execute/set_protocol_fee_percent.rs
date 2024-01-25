@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, Uint128, StdError };
+use cosmwasm_std::{DepsMut, Event, MessageInfo, Response, StdError, Uint128};
 
 use crate::{state::STATE, ContractError};
 

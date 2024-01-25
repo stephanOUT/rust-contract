@@ -12,10 +12,12 @@ pub fn get_price_query(
     with_fees: bool,
     is_buy: bool,
 ) -> StdResult<GetPriceResponse> {
+    let validated_shares_subject_address = deps.api.addr_validate(&shares_subject.to_string())?;
     let state = STATE.load(deps.storage)?;
-    let supply = Uint128::new(1) + SHARES_SUPPLY
-        .may_load(deps.storage, &shares_subject)?
-        .unwrap_or_default();
+    let supply = Uint128::new(1)
+        + SHARES_SUPPLY
+            .may_load(deps.storage, &validated_shares_subject_address)?
+            .unwrap_or_default();
 
     // Calculate the price without considering fees
     let base_price = get_price(if is_buy {
